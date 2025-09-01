@@ -10,7 +10,7 @@ import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from '../features/authSlice';
-import bgImage from '../asset/LoginWolfStore.png';
+import bgImage from '../asset/alphametriclogin.png';
 
 // Image URL
 // const bgImage = "https://raw.githubusercontent.com/creativetimofficial/public-assets/master/argon-dashboard-pro/assets/img/signin-ill.jpg";

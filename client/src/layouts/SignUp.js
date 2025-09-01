@@ -1211,7 +1211,8 @@ import { styled } from '@mui/material/styles';
 import Navbar from '../components/Navbar';
 import { useDispatch, useSelector } from 'react-redux';
 import { createAdminThunk, getAllAdminsThunk, deleteAdminThunk } from '../features/adminSlice';
-import { selectUser, selectIsAdmin, selectIsManager, selectIsCreateUserAllowed } from '../features/authSlice';
+import { selectIsAdmin, selectIsManager, selectIsDemo } from '../features/authSlice';
+import { toast } from 'react-toastify';
 
 const MainContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(3),
@@ -1243,6 +1244,7 @@ const RoleChip = styled(Chip)(({ role, theme }) => ({
   backgroundColor: 
     role === 'admin' ? theme.palette.error.main : 
     role === 'manager' ? theme.palette.primary.main : 
+    role === 'demo' ? theme.palette.info.main :
     theme.palette.secondary.main,
   color: 'white',
   fontWeight: 'bold',
@@ -1261,10 +1263,9 @@ const SignUp = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   // Get current user info from auth state using selectors
-  const user = useSelector(selectUser);
   const isAdmin = useSelector(selectIsAdmin);
   const isManager = useSelector(selectIsManager);
-  const isCreateUserAllowed = useSelector(selectIsCreateUserAllowed);
+  const isDemo = useSelector(selectIsDemo);
   const { admins, loading, error } = useSelector((state) => state.admin);
   
   const [formData, setFormData] = useState({
@@ -1305,6 +1306,10 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isAdmin && !isManager) return;
+    if (isDemo) {
+      toast.error('Demo users cannot create users.');
+      return;
+    }
     
     if (validateForm()) {
       try {
@@ -1324,12 +1329,16 @@ const SignUp = () => {
 
   const handleDeleteClick = (userId, userName, userRole) => {
     if (!canDeleteUser(userRole)) return;
+    if (isDemo) {
+      toast.error('Demo users cannot delete users.');
+      return;
+    }
     setDeleteDialog({ open: true, userId, userName, userRole });
   };
 
   const handleDeleteConfirm = async () => {
     if (deleteDialog.userId) {
-      await dispatch(deleteAdminThunk(deleteDialog.userId));
+      dispatch(deleteAdminThunk(deleteDialog.userId));
       dispatch(getAllAdminsThunk());
     }
     setDeleteDialog({ open: false, userId: null, userName: '', userRole: '' });
@@ -1369,11 +1378,13 @@ const SignUp = () => {
       return [
         { value: 'staff', label: 'Staff', icon: '👤' },
         { value: 'manager', label: 'Manager', icon: '👑' },
-        { value: 'admin', label: 'Admin', icon: '🔐' }
+        { value: 'admin', label: 'Admin', icon: '🔐' },
+        { value: 'demo', label: 'Demo', icon: '🔍' }
       ];
     } else if (isManager) {
       return [
-        { value: 'staff', label: 'Staff', icon: '👤' }
+        { value: 'staff', label: 'Staff', icon: '👤' },
+        { value: 'demo', label: 'Demo', icon: '🔍' }
       ];
     }
     return [];
@@ -1385,6 +1396,7 @@ const SignUp = () => {
       case 'admin': return '🔐';
       case 'manager': return '👑';
       case 'staff': return '👤';
+      case 'demo': return '🔍';
       default: return '👤';
     }
   };
@@ -1416,7 +1428,8 @@ const SignUp = () => {
                 User Management
               </Typography>
               <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                {isAdmin ? 'Full system administration - manage all users and roles' : 
+                {isDemo ? 'Demo access - view only' :
+                 isAdmin ? 'Full system administration - manage all users and roles' : 
                  isManager ? 'Manage staff users' : 
                  'View system users'}
               </Typography>
@@ -1426,7 +1439,7 @@ const SignUp = () => {
 
         <Grid container spacing={3}>
           {/* Create User Form */}
-          {(isAdmin || isManager) ? (
+          {(isAdmin || isManager) && !isDemo ? (
             <Grid item xs={12} md={5}>
               <FormCard>
                 <Box display="flex" alignItems="center" gap={1} mb={3}>
@@ -1538,14 +1551,14 @@ const SignUp = () => {
             <Grid item xs={12}>
               <Alert severity="info">
                 <Typography variant="body1">
-                  ⚠️ You need Admin or Manager privileges to create users.
+                  {isDemo ? '⚠️ Demo users have view-only access.' : '⚠️ You need Admin or Manager privileges to create users.'}
                 </Typography>
               </Alert>
             </Grid>
           )}
 
           {/* Users List */}
-          <Grid item xs={12} md={(isAdmin || isManager) ? 7 : 12}>
+          <Grid item xs={12} md={(isAdmin || isManager) && !isDemo ? 7 : 12}>
             <Card sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center" gap={1}>
                 <span style={{ fontSize: '1.2rem' }}>👥</span>
@@ -1569,7 +1582,7 @@ const SignUp = () => {
                           {!isMobile && <TableCell>Email</TableCell>}
                           <TableCell align="center">Role</TableCell>
                           {!isMobile && <TableCell align="center">Created</TableCell>}
-                          {(isAdmin || isManager) && <TableCell align="center">Actions</TableCell>}
+                          {(isAdmin || isManager) && !isDemo && <TableCell align="center">Actions</TableCell>}
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -1617,7 +1630,7 @@ const SignUp = () => {
                                 </Typography>
                               </TableCell>
                             )}
-                            {(isAdmin || isManager) && (
+                            {(isAdmin || isManager) && !isDemo && (
                               <TableCell align="center">
                                 <Tooltip title={
                                   canDelete(user.email, user.role) ? "Delete User" : 

@@ -3,7 +3,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Box,
   Button,
@@ -24,6 +24,8 @@ import FortnightDropdown from '../components/FortnightDropdown';
 import Navbar from '../components/Navbar';
 import { getKPITargetThunk, updateKPITargetThunk, createKPITargetThunk } from '../features/kpiTargetSlice';
 import { getTargetThunk } from '../features/targetSlice';
+import { useSelector } from 'react-redux';
+import { selectIsDemo } from '../features/authSlice';
 
 const TargetKPI = () => {
   const defaultFormData = {
@@ -61,6 +63,7 @@ const TargetKPI = () => {
   const dispatch = useDispatch();
   const { KPITarget, loading, error } = useSelector((state) => state.KPITargets);
   const { target } = useSelector((state) => state.targets);
+  const isDemo = useSelector(selectIsDemo);
 
   const formatDate = (date) => {
     const day = String(date.getUTCDate()).padStart(2, '0');
@@ -178,6 +181,10 @@ const TargetKPI = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isDemo) {
+      toast.error('Demo users cannot modify KPI targets.');
+      return;
+    }
     if (!isFormValid()) {
       toast.error('Please correct the errors before submitting.');
       return;
@@ -220,6 +227,7 @@ const TargetKPI = () => {
       size="small"
       error={!!errors[field]}
       helperText={errors[field]}
+      disabled={isDemo}
     />
   );
 
@@ -258,6 +266,7 @@ const TargetKPI = () => {
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 label="Select Location"
                 size="small"
+                disabled={isDemo}
               >
                 <MenuItem value="all-store">All Stores</MenuItem>
                 <MenuItem value="TRARALGON">TRARALGON</MenuItem>
@@ -307,6 +316,7 @@ const TargetKPI = () => {
                       sx={{ width: '30%' }}
                       error={!!errors.NPSMultiplierLow}
                       helperText={errors.NPSMultiplierLow}
+                      disabled={isDemo}
                     />
                   </Box>
 
@@ -324,6 +334,7 @@ const TargetKPI = () => {
             sx={{ width: '30%' }}
             error={!!errors.NPSMultiplierMid}
             helperText={errors.NPSMultiplierMid}
+            disabled={isDemo}
           />
         </Box>
 
@@ -341,6 +352,7 @@ const TargetKPI = () => {
                       sx={{ width: '30%' }}
                       error={!!errors.NPSMultiplierHigh}
                       helperText={errors.NPSMultiplierHigh}
+                      disabled={isDemo}
                     />
                   </Box>
 
@@ -349,7 +361,7 @@ const TargetKPI = () => {
                   <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>GP Commission Percentages</Typography>
                   <Box sx={{ display: 'flex', mb: 1 }}>
                     <Typography variant="body2" sx={{ width: '50%', pt: 1 }}>
-                      Tier 1 (≥{tierThresholds.tier1}):
+                      Tier 1 (≥ ${tierThresholds.tier1}):
                     </Typography>
                     <TextField
                       label="Tier 1 %"
@@ -362,12 +374,13 @@ const TargetKPI = () => {
                       sx={{ width: '50%' }}
                       error={!!errors.GPCommissionPercentage}
                       helperText={errors.GPCommissionPercentage}
+                      disabled={isDemo}
                     />
                   </Box>
 
                   <Box sx={{ display: 'flex', mb: 1 }}>
                     <Typography variant="body2" sx={{ width: '50%', pt: 1 }}>
-                      Tier 2 (≥{tierThresholds.tier2}):
+                      Tier 2 (≥ ${tierThresholds.tier2}):
                     </Typography>
                     <TextField
                       label="Tier 2 %"
@@ -380,12 +393,13 @@ const TargetKPI = () => {
                       sx={{ width: '50%' }}
                       error={!!errors.GPTier2Percentage}
                       helperText={errors.GPTier2Percentage}
+                      disabled={isDemo}
                     />
                   </Box>
 
                   <Box sx={{ display: 'flex', mb: 1 }}>
                     <Typography variant="body2" sx={{ width: '50%', pt: 1 }}>
-                      Tier 3 (≥{tierThresholds.tier3}):
+                      Tier 3 (≥ ${tierThresholds.tier3}):
                     </Typography>
                     <TextField
                       label="Tier 3 %"
@@ -398,6 +412,7 @@ const TargetKPI = () => {
                       sx={{ width: '50%' }}
                       error={!!errors.GPTier3Percentage}
                       helperText={errors.GPTier3Percentage}
+                      disabled={isDemo}
                     />
                   </Box>
                 </Paper>
@@ -405,8 +420,8 @@ const TargetKPI = () => {
             </Grid>
 
             <Box mt={6} display="flex" justifyContent="center">
-              <Button type="submit" variant="contained" color="primary" disabled={!isFormValid()}>
-                Submit
+              <Button type="submit" variant="contained" color="primary" disabled={!isFormValid() || isDemo}>
+                {isDemo ? 'Demo User - View Only' : 'Submit'}
               </Button>
             </Box>
           </form>

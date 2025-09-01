@@ -4,6 +4,24 @@ import React from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 
 const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColumn, tierThresholds, kpiTarget }) => {
+  // Light Theme Colors for Content
+  const themeColors = {
+    primary: '#2C3E50',       // Professional dark blue-gray
+    primaryLight: '#34495E',  // Lighter version
+    success: '#27AE60',       // Professional green
+    successLight: '#2ECC71',  // Light green for tiers
+    successDark: '#229954',   // Dark green for high tiers
+    warning: '#F39C12',       // Professional orange
+    warningLight: '#F8C471',  // Light orange
+    error: '#E74C3C',         // Professional red
+    errorLight: '#F1948A',    // Light red
+    background: '#F8F9FA',    // Light background
+    surface: '#FFFFFF',       // White surface
+    text: '#2C3E50',          // Dark text
+    textMuted: '#7F8C8D',     // Muted text
+    border: '#E9ECEF'         // Light border
+  };
+
   // Parse values to numbers
   const numericValue = parseFloat(value) || 0;
   const numericTarget = parseFloat(target) || 0;
@@ -35,20 +53,20 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
     
     if (isTier3) {
       // Tier 3 (highest)
-      color = '#1b5e20'; // Dark green
-      backgroundColor = 'rgba(27, 94, 32, 0.2)';
+      color = themeColors.successDark;
+      backgroundColor = themeColors.successDark + '20';
     } else if (isTier2) {
       // Tier 2
-      color = '#2e7d32'; // Medium green
-      backgroundColor = 'rgba(46, 125, 50, 0.2)';
+      color = themeColors.success;
+      backgroundColor = themeColors.success + '20';
     } else if (isTier1) {
       // Tier 1
-      color = '#4caf50'; // Light green
-      backgroundColor = 'rgba(76, 175, 80, 0.2)';
+      color = themeColors.successLight;
+      backgroundColor = themeColors.successLight + '20';
     } else {
       // Below all tiers
-      color = 'red';
-      backgroundColor = 'rgba(255, 0, 0, 0.2)';
+      color = themeColors.error;
+      backgroundColor = themeColors.errorLight + '20';
     }
     
     // Custom tooltip for GP column showing all tiers with color indicators
@@ -66,7 +84,7 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
               display: 'inline-block', 
               width: 12, 
               height: 12, 
-              backgroundColor: '#4caf50', 
+              backgroundColor: themeColors.successLight, 
               borderRadius: '50%',
               border: isTier1 ? '2px solid black' : 'none'
             }} 
@@ -86,7 +104,7 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
               display: 'inline-block', 
               width: 12, 
               height: 12, 
-              backgroundColor: '#2e7d32', 
+              backgroundColor: themeColors.success, 
               borderRadius: '50%',
               border: isTier2 ? '2px solid black' : 'none'
             }} 
@@ -106,7 +124,7 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
               display: 'inline-block', 
               width: 12, 
               height: 12, 
-              backgroundColor: '#1b5e20', 
+              backgroundColor: themeColors.successDark, 
               borderRadius: '50%',
               border: isTier3 ? '2px solid black' : 'none'
             }} 
@@ -121,13 +139,13 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
     );
   } else if (isDpcColumn) {
     // Handle DPC column (percentage values)
-    color = numericValue < numericTarget ? 'red' : 'green';
-    backgroundColor = numericValue < numericTarget ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 128, 0, 0.2)';
+    color = numericValue < numericTarget ? themeColors.error : themeColors.success;
+    backgroundColor = numericValue < numericTarget ? themeColors.errorLight + '30' : themeColors.success + '20';
     tooltipContent = `Target: ${target}%`;
   } else {
     // Handle all other columns
-    color = numericValue < numericTarget ? 'red' : 'green';
-    backgroundColor = numericValue < numericTarget ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 128, 0, 0.2)';
+    color = numericValue < numericTarget ? themeColors.error : themeColors.success;
+    backgroundColor = numericValue < numericTarget ? themeColors.errorLight + '30' : themeColors.success + '20';
     tooltipContent = `Target: ${target}`;
   }
   

@@ -249,7 +249,8 @@ const ALLOWED_EMAILS = [
   // 'torquay@wolfstores.com.au',
   'gauravisonline@gmail.com', // Admin
   'shae@wolfstores.com.au',   // Admin
-  'bec@wolfstores.com.au'     // Admin
+  'bec@wolfstores.com.au',    // Admin
+  'demo@wolfstores.com.au'    // Demo user
   // 'traralgon@wolfstores.com.au'
 ];
 
@@ -257,7 +258,10 @@ const ALLOWED_EMAILS = [
 const isEmailAllowed = (email) => ALLOWED_EMAILS.includes(email);
 
 // Helper function to determine if email should have admin privileges (for backward compatibility)
-const isEmailAdmin = (email) => ALLOWED_EMAILS.includes(email);
+const isEmailAdmin = (email) => ALLOWED_EMAILS.includes(email) && email !== 'demo@wolfstores.com.au';
+
+// Helper function to check if user is demo user
+const isDemoUser = (email) => email === 'demo@wolfstores.com.au';
 
 // Helper function to get user from localStorage
 const getUserFromStorage = () => {
@@ -288,6 +292,7 @@ const removeUserFromStorage = () => {
 const getCreateUserPermissions = (role, email) => {
   if (role === 'admin') return true;
   if (role === 'manager') return true;
+  if (role === 'demo') return true;
   
   // Fallback to email-based check for backward compatibility
   return isEmailAllowed(email);
@@ -302,9 +307,13 @@ export const loginUser = createAsyncThunk('auth/loginUser', async ({ email, pass
     localStorage.setItem('userEmail', response.admin.email);
     localStorage.setItem('token', response.token);
     
-    // If user doesn't have a role but email is in allowed list, set as admin (backward compatibility)
-    if (!response.admin.role && isEmailAdmin(response.admin.email)) {
-      response.admin.role = 'admin';
+    // If user doesn't have a role but email is in allowed list, set appropriate role (backward compatibility)
+    if (!response.admin.role) {
+      if (isDemoUser(response.admin.email)) {
+        response.admin.role = 'demo';
+      } else if (isEmailAdmin(response.admin.email)) {
+        response.admin.role = 'admin';
+      }
     }
     
     saveUserToStorage(response.admin);
@@ -320,10 +329,15 @@ const authSlice = createSlice({
   initialState: {
     user: (() => {
       const storedUser = getUserFromStorage();
-      // Ensure backward compatibility - if user has no role but email is allowed, set as admin
-      if (storedUser && !storedUser.role && isEmailAdmin(storedUser.email)) {
-        storedUser.role = 'admin';
-        saveUserToStorage(storedUser);
+      // Ensure backward compatibility - if user has no role but email is allowed, set appropriate role
+      if (storedUser && !storedUser.role) {
+        if (isDemoUser(storedUser.email)) {
+          storedUser.role = 'demo';
+          saveUserToStorage(storedUser);
+        } else if (isEmailAdmin(storedUser.email)) {
+          storedUser.role = 'admin';
+          saveUserToStorage(storedUser);
+        }
       }
       return storedUser;
     })(),
@@ -433,6 +447,7 @@ export const selectUserRole = (state) => state.auth.user?.role;
 export const selectIsAdmin = (state) => state.auth.user?.role === 'admin';
 export const selectIsManager = (state) => state.auth.user?.role === 'manager';
 export const selectIsStaff = (state) => state.auth.user?.role === 'staff';
+export const selectIsDemo = (state) => state.auth.user?.role === 'demo';
 
 // Permission-based selectors
 export const selectIsCreateUserAllowed = (state) => state.auth.isCreateUserAllowed;
@@ -503,6 +518,13 @@ export const selectUserPermissionLevel = (state) => {
         displayName: 'Staff',
         description: 'Standard user access',
         icon: '👤'
+      };
+    case 'demo':
+      return {
+        level: 'demo',
+        displayName: 'Demo User',
+        description: 'Limited access - view only',
+        icon: '👁️'
       };
     default:
       return {

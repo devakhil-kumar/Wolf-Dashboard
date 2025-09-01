@@ -1151,7 +1151,7 @@
 // //   flex: 1,
 // //   overflow: 'auto', // Only table scrolls
 // //   borderRadius: '0 0 8px 8px',
-// //   border: '2px solid #e0e0e0',
+// //   border: '2px solid var(--color-border)',
  
 // //   borderTop: 'none',
 // // };
@@ -1167,7 +1167,7 @@
 // const tableContainerStyles = {
 //   overflow: 'auto',
 //   borderRadius: '0 0 8px 8px',
-//   border: '2px solid #e0e0e0',
+//   border: '2px solid var(--color-border)',
 //   borderTop: 'none',
 //   flex: '1 1 auto',
 // };
@@ -1205,10 +1205,10 @@
 //             display: "flex",
 //             flexDirection: "row",
 //             justifyContent: "space-between",
-//             borderBottom: "2px solid #e0e0e0",
+//             borderBottom: "2px solid var(--color-border)",
 //             borderRadius: "8px 8px 0 0",
-//             borderLeft: "2px solid #e0e0e0",
-//             borderRight: "2px solid #e0e0e0",
+//             borderLeft: "2px solid var(--color-border)",
+//             borderRight: "2px solid var(--color-border)",
 //             backgroundColor: "#fafafa",
 //             flexShrink: 0,
 //           }}
@@ -1235,9 +1235,9 @@
 //                 sx={{
 //                   minWidth: "120px",
 //                   borderRadius: "8px 8px 0 0",
-//                   borderLeft: "2px solid #e0e0e0",
-//                   borderRight: "2px solid #e0e0e0",
-//                   borderTop: "2px solid #e0e0e0",
+//                   borderLeft: "2px solid var(--color-border)",
+//                   borderRight: "2px solid var(--color-border)",
+//                   borderTop: "2px solid var(--color-border)",
 //                   marginRight: "2px",
 //                   paddingY: "25.5px",
 //                   "&:hover": {
@@ -1314,7 +1314,7 @@
 //               // sx={{
 //               //   maxHeight: 600,
 //               //   borderRadius: "0 0 8px 8px",
-//               //   border: "2px solid #e0e0e0",
+//               //   border: "2px solid var(--color-border)",
 //               //   borderTop: "none",
 //               // }}
 //               sx={tableContainerStyles}
@@ -2769,7 +2769,7 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
   const tableContainerStyles = {
     overflow: 'auto',
     borderRadius: '0 0 8px 8px',
-    border: '2px solid #e0e0e0',
+    border: '2px solid var(--color-border)',
     borderTop: 'none',
     flex: '1 1 auto',
   };
@@ -2777,7 +2777,7 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
   const stickyFooterStyles = {
     position: 'sticky',
     bottom: 0,
-    backgroundColor: 'lightgrey',
+    backgroundColor: 'var(--color-background)',
     zIndex: 1,
   };
 
@@ -2802,11 +2802,11 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
             display: "flex",
             flexDirection: "row",
             justifyContent: "space-between",
-            borderBottom: "2px solid #e0e0e0",
+            borderBottom: "2px solid var(--color-border)",
             borderRadius: "8px 8px 0 0",
-            borderLeft: "2px solid #e0e0e0",
-            borderRight: "2px solid #e0e0e0",
-            backgroundColor: "#fafafa",
+            borderLeft: "2px solid var(--color-border)",
+            borderRight: "2px solid var(--color-border)",
+            backgroundColor: "var(--color-surface)", 
             flexShrink: 0,
           }}
         >
@@ -2815,7 +2815,7 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
             onChange={handleTabChange}
             TabIndicatorProps={{
               sx: {
-                backgroundColor: "#54595f",
+                  backgroundColor: "var(--color-secondary)",
                 height: "3px",
               },
             }}
@@ -2832,21 +2832,34 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
                 sx={{
                   minWidth: "120px",
                   borderRadius: "8px 8px 0 0",
-                  borderLeft: "2px solid #e0e0e0",
-                  borderRight: "2px solid #e0e0e0",
-                  borderTop: "2px solid #e0e0e0",
-                  marginRight: "2px",
+                  borderLeft: "2px solid var(--color-primary)",
+                  borderRight: "2px solid var(--color-primary)",
+                  borderTop: "2px solid var(--color-primary)",
+                  
                   paddingY: "25.5px",
+                  marginRight: "2px",                   
+        
+          paddingX: "24px",
+          fontWeight: "bold",
+          fontSize: "14px",
+          letterSpacing: "0.5px",
+          backgroundColor: "var(--color-primary)", // Professional dark blue-gray
+          color: "var(--color-surface)", // White text on dark tabs
+
                   "&:hover": {
-                    backgroundColor: "#54595f",
-                    color: "#FFFFFF",
+                     backgroundColor: "var(--color-primary-light)",
+                    color: "var(--color-surface)",
                   },
                   "&.Mui-selected": {
-                    borderLeft: "2px solid #54595f",
-                    borderRight: "2px solid #54595f",
-                    borderTop: "2px solid #54595f",
-                    backgroundColor: " #54595f",
-                    color: "#FFFFFF",
+                    borderLeft: "2px solid var(--color-secondary)",
+                    borderRight: "2px solid var(--color-secondary)",
+                    borderTop: "2px solid var(--color-secondary)",
+                    backgroundColor: "var(--color-secondary)",
+                    color: "var(--color-surface)",
+                     backgroundColor: "var(--color-secondary)", // Orange selected tab background
+      
+            
+           
                   },
                 }}
               />
@@ -2861,13 +2874,13 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
               onChange={(e) => setHideColumns(e.target.checked)}
               color="primary"
               sx={{
-                color: "#54595f",
+                color: "var(--color-primary)",
                 "&.Mui-checked": {
-                  color: "#54595f",
+                  color: "var(--color-secondary)",
                 },
                 "&:hover": {
-                  backgroundColor: "#54595f",
-                  color: "#FFFFFF",
+                  backgroundColor: "var(--color-primary-light)",
+                  color: "var(--color-surface)",
                 },
               }}
             />
@@ -2912,7 +2925,7 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
                           key={index}
                           colSpan={header.colSpan}
                           align={header.align}
-                          style={{ borderRight: "1px solid #e0e0e0" }}
+                          style={{ borderRight: "1px solid var(--color-border)" }}
                         >
                           {header.kpi && KPITargets && (
                             <div>
@@ -2950,8 +2963,9 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
                           style={{
                             minWidth: column.minWidth,
                             fontWeight: "bold",
-                            backgroundColor: "#f5f5f5",
-                            border: "1px solid #e0e0e0",
+                            color: "var(--navbar-text)",
+                            backgroundColor: "var(--color-primary)",
+                            border: "1px solid var(--navbar-hover)",
                           }}
                         >
                           {column.label}
@@ -3022,7 +3036,7 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
                                     }
                                   }}
                                   style={{
-                                    border: "1px solid #e0e0e0",
+                                    border: "1px solid var(--color-border)",
                                     cursor: isEditable ? "pointer" : "default",
                                     textAlign: "center",
                                   }}
@@ -3145,9 +3159,10 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
                           style={{
                             position: "sticky",
                             bottom: 0,
-                            backgroundColor: "lightgrey",
+                            backgroundColor: "var(--color-primary)",
                             fontWeight: "bold",
-                            borderTop: "1px solid black",
+                            color: "var(--color-surface)",
+                            borderTop: "1px solid var(--color-primary)",
                           }}
                         >
                           {/* FIXED TOTALS DOLLAR FORMATTING for repositioned columns */}

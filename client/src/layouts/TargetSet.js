@@ -263,7 +263,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { 
   Box, 
   Button, 
@@ -284,6 +284,8 @@ import { getTargetThunk, updateTargetThunk, createTargetThunk } from '../feature
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import FortnightDropdown from '../components/FortnightDropdown';
+import { useSelector } from 'react-redux';
+import { selectIsDemo } from '../features/authSlice';
 
 const SetTargetForm = () => {
   const [gpTarget, setGpTarget] = useState('');
@@ -308,6 +310,7 @@ const SetTargetForm = () => {
   
   const dispatch = useDispatch();
   const { target, loading, error } = useSelector((state) => state.targets);
+  const isDemo = useSelector(selectIsDemo);
   
   const formatDate = (date) => {
     const day = String(date.getUTCDate()).padStart(2, '0');
@@ -386,6 +389,11 @@ const SetTargetForm = () => {
   
   const handleUpdateTarget = async (event) => {
     event.preventDefault();
+    
+    if (isDemo) {
+      toast.error('Demo users cannot modify targets.');
+      return;
+    }
     
     if (!validateTiers()) {
       toast.error('Please correct the GP tier thresholds.');
@@ -473,6 +481,7 @@ const SetTargetForm = () => {
                 onChange={(e) => setSelectedLocation(e.target.value)}
                 label="Select Location"
                 size="small"
+                disabled={isDemo}
               >
                 <MenuItem value="all-store">All Stores</MenuItem>
                 <MenuItem value="TRARALGON">TRARALGON</MenuItem>
@@ -490,6 +499,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
              <TextField
               label="Accessory GP to Handset Sales Target"
@@ -500,6 +510,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             <TextField
               label="Bundle New Target"
@@ -510,6 +521,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             <TextField
               label="PPN Target"
@@ -520,6 +532,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             <TextField
               label="TMB Target"
@@ -530,6 +543,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             <TextField
               label="	Belong NBN Target"
@@ -540,6 +554,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             <TextField
               label="Telstra Plus Target"
@@ -550,6 +565,7 @@ const SetTargetForm = () => {
               fullWidth
               margin="dense"
               size="small"
+              disabled={isDemo}
             />
             
             <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>GP Tier Thresholds</Typography>
@@ -565,6 +581,7 @@ const SetTargetForm = () => {
               size="small"
               error={!!errors.gpGreenTarget}
               helperText={errors.gpGreenTarget}
+              disabled={isDemo}
             />
             <TextField
               label="Tier 2 GP Threshold"
@@ -577,6 +594,7 @@ const SetTargetForm = () => {
               size="small"
               error={!!errors.gpTier2Threshold}
               helperText={errors.gpTier2Threshold}
+              disabled={isDemo}
             />
             <TextField
               label="Tier 3 GP Threshold"
@@ -589,10 +607,13 @@ const SetTargetForm = () => {
               size="small"
               error={!!errors.gpTier3Threshold}
               helperText={errors.gpTier3Threshold}
+              disabled={isDemo}
             />
             
             <Box mt={2}>
-              <Button type="submit" variant="contained" color="primary">Submit</Button>
+              <Button type="submit" variant="contained" color="primary" disabled={isDemo}>
+                {isDemo ? 'Demo User - View Only' : 'Submit'}
+              </Button>
             </Box>
           </form>
         )}
