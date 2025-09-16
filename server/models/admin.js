@@ -7,7 +7,7 @@ const adminSchema= new Schema({
   password: { type: String, required: true,select:false},
    role: {
       type: String,
-      enum: [ 'admin','manager', 'staff'], // Add more roles if needed
+      enum: [ 'admin','manager', 'staff','demo'], // Add more roles if needed
       default: 'staff',
       required: true
     }
