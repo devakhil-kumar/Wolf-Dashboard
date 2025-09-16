@@ -32,6 +32,7 @@ const TargetKPI = () => {
     KPITMB: '',
     KPIPPN: '',
     KPIBundle: '',
+    KPISBNBN: '',
     KPITWD: '',
     KPIDPC: '',
     KPIACCGP: '',
@@ -107,6 +108,7 @@ const TargetKPI = () => {
         KPITMB: KPITarget?.KPITMB || '',
         KPIPPN: KPITarget?.KPIPPN || '',
         KPIBundle: KPITarget?.KPIBundle || '',
+        KPISBNBN: KPITarget?.KPISBNBN || '',
         KPITWD: KPITarget?.KPITWD || '',
         KPIDPC: KPITarget?.KPIDPC || '',
         KPIACCGP: KPITarget?.KPIACCGP || '',
@@ -164,9 +166,9 @@ const TargetKPI = () => {
       }
     }
 
-    if (['KPIPPN', 'KPIBundle', 'KPITMB', 'KPITWD', 'KPIDPC', 'KPIACCGP'].includes(field)) {
+    if (['KPIPPN', 'KPIBundle', 'KPITMB', 'KPISBNBN', 'KPITWD', 'KPIDPC', 'KPIACCGP'].includes(field)) {
       const newFormData = { ...formData, [field]: value };
-      const total = ['KPIPPN', 'KPIBundle', 'KPITMB', 'KPITWD', 'KPIDPC', 'KPIACCGP']
+      const total = ['KPIPPN', 'KPIBundle', 'KPITMB', 'KPISBNBN', 'KPITWD', 'KPIDPC', 'KPIACCGP']
         .reduce((sum, f) => sum + Number(newFormData[f]), 0);
       setTotalError(total > 100);
     }
@@ -282,6 +284,7 @@ const TargetKPI = () => {
                   {renderTextField("PPN % Target", "KPIPPN", 0, 100)}
                   {renderTextField("Bundle % Target", "KPIBundle", 0, 100)}
                   {renderTextField("TMB % Target", "KPITMB", 0, 100)}
+                  {renderTextField("SB NBN % Target", "KPISBNBN", 0, 100)}
                   {renderTextField("TWD % Target", "KPITWD", 0, 100)}
                   {renderTextField("DPC % Target", "KPIDPC", 0, 100)}
                   {renderTextField("Accessory GP % Target", "KPIACCGP", 0, 100)}

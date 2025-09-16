@@ -7,6 +7,7 @@ const kpiSchema = mongoose.Schema(
     KPIPPN: { type: Number },
     KPIBundle: { type: Number },
     KPITMB:{ type: Number },
+    KPISBNBN: { type: Number },
    KPITWD: { type: Number },
    KPIDPC: { type: Number },
     KPIACCGP: { type: Number },

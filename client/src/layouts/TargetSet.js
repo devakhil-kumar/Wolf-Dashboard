@@ -264,20 +264,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { 
-  Box, 
-  Button, 
-  TextField, 
-  Typography, 
-  CircularProgress, 
-  FormControl, 
-  Select, 
-  MenuItem, 
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  CircularProgress,
+  FormControl,
+  Select,
+  MenuItem,
   InputLabel,
   Divider,
   Paper,
-  Grid
+  Grid,
+  Chip,
+  IconButton
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import Navbar from '../components/Navbar';
 import './SetTargetForm.css';
 import { getTargetThunk, updateTargetThunk, createTargetThunk } from '../features/targetSlice';
@@ -294,6 +298,7 @@ const SetTargetForm = () => {
   const [ppnTarget, setPpnTarget] = useState('');
   const [tmbTarget, setTmbTarget] = useState('');
   const [tyroTarget, setTyroTarget] = useState('');
+  const [sbNbnTarget, setSbNbnTarget] = useState('');
   const [websiteBasTarget, setWebsiteBasTarget] = useState('');
   const [deviceSecurityTarget, setDeviceSecurityTarget] = useState('');
   
@@ -301,7 +306,12 @@ const SetTargetForm = () => {
   const [gpGreenTarget,setGpGreenTarget] = useState('12000');
   const [gpTier2Threshold, setGpTier2Threshold] = useState('14000');
   const [gpTier3Threshold, setGpTier3Threshold] = useState('16000');
-  
+
+  // Product bonus states
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [bonusValue, setBonusValue] = useState('');
+  const [productBonuses, setProductBonuses] = useState([]);
+
   const [selectedLocation, setSelectedLocation] = useState('TRARALGON');
   const [selectedFortnight, setSelectedFortnight] = useState();
   const [fromDate, setFromDate] = useState('');
@@ -311,6 +321,24 @@ const SetTargetForm = () => {
   const dispatch = useDispatch();
   const { target, loading, error } = useSelector((state) => state.targets);
   const isDemo = useSelector(selectIsDemo);
+
+  // Available products for bonus selection
+  const availableProducts = [
+    'PPN',
+    'SB PPN',
+    'Bundle New',
+    'TMB',
+    'Device Protection',
+    'Belong PPN',
+    'SB NBN',
+    'Belong NBN',
+    'Telstra Plus',
+    'Device Security($10/m)',
+    'Outright Mobile/Tablet Inc Prepaid',
+    'DPC Mobile/Tablet',
+    'Smart Watch',
+    'Accessory GP'
+  ];
   
   const formatDate = (date) => {
     const day = String(date.getUTCDate()).padStart(2, '0');
@@ -339,13 +367,17 @@ const SetTargetForm = () => {
       setPpnTarget(target?.ppn || '');
       setTmbTarget(target?.tmb || '');
       setTyroTarget(target?.tyro || '');
+      setSbNbnTarget(target?.sbNbn || '');
       setWebsiteBasTarget(target?.websitebas || '');
       setDeviceSecurityTarget(target?.devicesecurity || '');
-      
+
       // Load GP tier thresholds if they exist
       setGpGreenTarget(target?.gpGreenTarget || '12000');
       setGpTier2Threshold(target?.gpTier2Threshold || '14000');
       setGpTier3Threshold(target?.gpTier3Threshold || '16000');
+
+      // Load product bonuses if they exist
+      setProductBonuses(target?.productBonuses || []);
     } else {
       setDpcTarget('');
       setGpTarget('');
@@ -353,36 +385,90 @@ const SetTargetForm = () => {
       setPpnTarget('');
       setTmbTarget('');
       setTyroTarget('');
+      setSbNbnTarget('');
       setWebsiteBasTarget('');
       setDeviceSecurityTarget('');
-      
+
       // Reset to default values
       setGpGreenTarget('12000');
       setGpTier2Threshold('14000');
       setGpTier3Threshold('16000');
+
+      // Reset product bonuses
+      setProductBonuses([]);
     }
   }, [target, fromDate]);
   
+  // Handle adding a product bonus
+  const handleAddProductBonus = () => {
+    if (!selectedProduct || !bonusValue) {
+      toast.error('Please select a product and enter a bonus value.');
+      return;
+    }
+
+    if (isNaN(bonusValue) || Number(bonusValue) <= 0) {
+      toast.error('Please enter a valid bonus amount.');
+      return;
+    }
+
+    // Check if product already has a bonus
+    const existingBonusIndex = productBonuses.findIndex(
+      bonus => bonus.product === selectedProduct
+    );
+
+    if (existingBonusIndex !== -1) {
+      // Update existing bonus by creating a new object
+      const updatedBonuses = [...productBonuses];
+      updatedBonuses[existingBonusIndex] = {
+        ...updatedBonuses[existingBonusIndex],
+        bonusValue: Number(bonusValue)
+      };
+      setProductBonuses(updatedBonuses);
+      toast.success(`Updated bonus for ${selectedProduct}`);
+    } else {
+      // Add new bonus
+      const newBonus = {
+        product: selectedProduct,
+        bonusValue: Number(bonusValue)
+      };
+      setProductBonuses([...productBonuses, newBonus]);
+      toast.success(`Added bonus for ${selectedProduct}`);
+    }
+
+    // Reset form
+    setSelectedProduct('');
+    setBonusValue('');
+  };
+
+  // Handle removing a product bonus
+  const handleRemoveProductBonus = (productToRemove) => {
+    const updatedBonuses = productBonuses.filter(
+      bonus => bonus.product !== productToRemove
+    );
+    setProductBonuses(updatedBonuses);
+    toast.success(`Removed bonus for ${productToRemove}`);
+  };
+
   // Validate the GP tier thresholds are in ascending order
   const validateTiers = () => {
     const tier1 = Number(gpGreenTarget);
     const tier2 = Number(gpTier2Threshold);
     const tier3 = Number(gpTier3Threshold);
     const newErrors = { ...errors };
-    
+
     // Clear previous tier errors
     delete newErrors.gpGreenTarget;
     delete newErrors.gpTier2Threshold;
     delete newErrors.gpTier3Threshold;
-    
+
     if (tier1 >= tier2) {
       newErrors.gpGreenTarget = 'Tier 1 must be less than Tier 2';
     }
-    
+
     if (tier2 >= tier3) {
       newErrors.gpTier2Threshold = 'Tier 2 must be less than Tier 3';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -408,14 +494,18 @@ const SetTargetForm = () => {
       ppn: ppnTarget,
       tmb: tmbTarget,
       tyro: tyroTarget,
+      sbNbn: sbNbnTarget,
       websitebas: websiteBasTarget,
       devicesecurity: deviceSecurityTarget,
       AcceGP_Handset_Sales: gpTarget,
-      
+
       // Add the GP tier thresholds
       gpGreenTarget: gpGreenTarget,
       gpTier2Threshold: gpTier2Threshold,
-      gpTier3Threshold: gpTier3Threshold
+      gpTier3Threshold: gpTier3Threshold,
+
+      // Add product bonuses
+      productBonuses: productBonuses
     };
     
     const formattedFromDate = formatDate(new Date(fromDate));
@@ -546,7 +636,18 @@ const SetTargetForm = () => {
               disabled={isDemo}
             />
             <TextField
-              label="	Belong NBN Target"
+              label="SB NBN Target"
+              type="number"
+              value={sbNbnTarget}
+              onChange={(e) => setSbNbnTarget(e.target.value)}
+              variant="outlined"
+              fullWidth
+              margin="dense"
+              size="small"
+              disabled={isDemo}
+            />
+            <TextField
+              label="Belong NBN Target"
               type="number"
               value={tyroTarget}
               onChange={(e) => setTyroTarget(e.target.value)}
@@ -609,7 +710,75 @@ const SetTargetForm = () => {
               helperText={errors.gpTier3Threshold}
               disabled={isDemo}
             />
-            
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>Product Bonus Values</Typography>
+
+            {/* Product Selection and Bonus Input */}
+            <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+              <Grid item xs={5}>
+                <FormControl variant="outlined" fullWidth size="small">
+                  <InputLabel>Select Product</InputLabel>
+                  <Select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    label="Select Product"
+                    disabled={isDemo}
+                  >
+                    {availableProducts.map((product) => (
+                      <MenuItem key={product} value={product}>
+                        {product}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={4}>
+                <TextField
+                  label="Bonus Value ($)"
+                  type="number"
+                  value={bonusValue}
+                  onChange={(e) => setBonusValue(e.target.value)}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                  disabled={isDemo}
+                />
+              </Grid>
+              <Grid item xs={3}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleAddProductBonus}
+                  startIcon={<AddIcon />}
+                  disabled={isDemo}
+                  size="small"
+                >
+                  Add Bonus
+                </Button>
+              </Grid>
+            </Grid>
+
+            {/* Display Current Product Bonuses */}
+            {productBonuses.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Current Product Bonuses:</Typography>
+                <Box display="flex" flexWrap="wrap" gap={1}>
+                  {productBonuses.map((bonus, index) => (
+                    <Chip
+                      key={index}
+                      label={`${bonus.product}: $${bonus.bonusValue}`}
+                      onDelete={!isDemo ? () => handleRemoveProductBonus(bonus.product) : undefined}
+                      deleteIcon={<DeleteIcon />}
+                      color="primary"
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             <Box mt={2}>
               <Button type="submit" variant="contained" color="primary" disabled={isDemo}>
                 {isDemo ? 'Demo User - View Only' : 'Submit'}

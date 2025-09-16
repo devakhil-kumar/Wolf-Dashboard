@@ -26,11 +26,15 @@ const targetSchema = mongoose.Schema({
   },
   websitebas: {
     type: Number,
-    
+
+  },
+  sbNbn: {
+    type: Number,
+
   },
   devicesecurity: {
     type: Number,
-    
+
   },
   gpGreenTarget:{
     type:Number,
@@ -41,6 +45,17 @@ const targetSchema = mongoose.Schema({
   gpTier3Threshold:{
     type:Number,
   },
+  productBonuses: [{
+    product: {
+      type: String,
+      required: true
+    },
+    bonusValue: {
+      type: Number,
+      required: true,
+      min: 0
+    }
+  }],
   createdDate: { type: Date,  required: true },
 }, { timestamps: true });
 

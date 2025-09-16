@@ -3,7 +3,7 @@
 import React from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 
-const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColumn, tierThresholds, kpiTarget }) => {
+const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColumn, tierThresholds, kpiTarget, isPPNCombined, ppnCombinedData }) => {
   // Light Theme Colors for Content
   const themeColors = {
     primary: '#2C3E50',       // Professional dark blue-gray
@@ -13,7 +13,8 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
     successDark: '#229954',   // Dark green for high tiers
     warning: '#F39C12',       // Professional orange
     warningLight: '#F8C471',  // Light orange
-    error: '#E74C3C',         // Professional red
+    error: '#E74C3C',   
+     error2: '#9c3a25ff',        // Professional red
     errorLight: '#F1948A',    // Light red
     background: '#F8F9FA',    // Light background
     surface: '#FFFFFF',       // White surface
@@ -134,6 +135,42 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
         
         <Typography variant="body2" sx={{ mt: 1 }}>
           Current: {displayValue || value}
+        </Typography>
+      </Box>
+    );
+  } else if (isPPNCombined && ppnCombinedData) {
+    // Handle combined PPN columns (6 and 7) showing total achievement
+    const col6Value = parseFloat(ppnCombinedData.column6Value) || 0;
+    const col7Value = parseFloat(ppnCombinedData.column7Value) || 0;
+    const combinedTotal = col6Value + col7Value;
+    
+    color = combinedTotal >= numericTarget ? themeColors.success : themeColors.error;
+    backgroundColor = combinedTotal >= numericTarget ? themeColors.success + '20' : themeColors.errorLight + '30';
+    
+    tooltipContent = (
+      <Box sx={{ p: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+          PPN Target Achievement
+        </Typography>
+        <Typography variant="body2">
+          PPN: {col6Value}
+        </Typography>
+        <Typography variant="body2">
+          SB PPN: {col7Value}
+        </Typography>
+        <Typography variant="body2" sx={{ 
+          borderTop: '1px solid #ddd', 
+          pt: 0.5, 
+          mt: 0.5, 
+          fontWeight: 'bold' 
+        }}>
+          Combined Total: {combinedTotal}
+        </Typography>
+        <Typography variant="body2" sx={{ 
+          // color: combinedTotal >= numericTarget ? themeColors.success : themeColors.error2,
+          fontWeight: 'bold'
+        }}>
+          Target: {target} ({combinedTotal >= numericTarget ? '✓ Achieved' : '✗ Not Achieved'})
         </Typography>
       </Box>
     );
