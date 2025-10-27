@@ -9,7 +9,7 @@
   --navbar-hover: #1A1A1A;           /* Dark gray for navbar hover */
   --navbar-text: #FFFFFF;            /* White text on navbar */
   --navbar-accent: #FF6B35;          /* Orange accent for navbar */
-  
+
   /* Main content colors (light/neutral) */
   --color-primary: #34495E;          /* Professional dark blue-gray */
   --color-primary-light: #34495E;    /* Lighter version for hover */
@@ -28,6 +28,45 @@
   --color-text-muted: #7F8C8D;       /* Muted text for secondary info */
   --color-border: #E9ECEF;           /* Light border color */
   --color-border-dark: #DEE2E6;      /* Slightly darker border */
+
+  /* Typography System - Match Navbar Style */
+  --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+
+  /* Font Sizes - Consistent Hierarchy */
+  --font-size-xs: 11px;              /* Extra small - minimal labels */
+  --font-size-sm: 12px;              /* Small - table cells, secondary text */
+  --font-size-base: 14px;            /* Base - normal body text, inputs */
+  --font-size-md: 15px;              /* Medium - emphasized text */
+  --font-size-lg: 16px;              /* Large - section headings */
+  --font-size-xl: 18px;              /* Extra large - main headings */
+  --font-size-2xl: 20px;             /* Page titles */
+
+  /* Font Weights - Consistent Usage */
+  --font-weight-normal: 400;         /* Regular text */
+  --font-weight-medium: 500;         /* Slightly emphasized */
+  --font-weight-semibold: 600;       /* Tab labels, buttons */
+  --font-weight-bold: 700;           /* Headings, important labels */
+
+  /* Letter Spacing - Professional Look */
+  --letter-spacing-tight: -0.01em;   /* Tight for large text */
+  --letter-spacing-normal: 0;        /* Normal spacing */
+  --letter-spacing-wide: 0.02em;     /* Wide for uppercase labels */
+  --letter-spacing-wider: 0.05em;    /* Extra wide for emphasis */
+
+  /* Line Heights - Optimal Readability */
+  --line-height-tight: 1.2;          /* Headings */
+  --line-height-normal: 1.5;         /* Body text */
+  --line-height-relaxed: 1.75;       /* Comfortable reading */
+
+  /* Spacing Scale - Consistent Margins and Padding */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
 }
 
 body {
@@ -79,4 +118,106 @@ p, span, div {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(45, 55, 72, 0.1);
   border: 1px solid var(--color-border);
+}
+
+/* =================================================
+   TYPOGRAPHY UTILITY CLASSES
+   ================================================= */
+
+/* Headings - Matching Navbar Style */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+  color: var(--color-text);
+}
+
+h1 { font-size: var(--font-size-2xl); letter-spacing: var(--letter-spacing-tight); }
+h2 { font-size: var(--font-size-xl); letter-spacing: var(--letter-spacing-tight); }
+h3 { font-size: var(--font-size-lg); }
+h4 { font-size: var(--font-size-md); }
+h5 { font-size: var(--font-size-base); }
+h6 { font-size: var(--font-size-sm); }
+
+/* =================================================
+   TABLE TYPOGRAPHY STANDARDIZATION
+   ================================================= */
+
+/* Table Headers - Match Navbar Navigation Style */
+.MuiTableCell-head {
+  font-family: var(--font-family-heading) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-bold) !important;
+  letter-spacing: var(--letter-spacing-wide) !important;
+  text-transform: uppercase;
+  line-height: var(--line-height-tight) !important;
+}
+
+/* Table Body Cells */
+.MuiTableCell-body {
+  font-family: var(--font-family-primary) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: var(--font-weight-normal) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+/* Tab Labels - Match Navbar Navigation */
+.MuiTab-root {
+  font-family: var(--font-family-heading) !important;
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-bold) !important;
+  letter-spacing: var(--letter-spacing-wide) !important;
+  text-transform: uppercase;
+}
+
+/* Typography - Match Navbar */
+.MuiTypography-root {
+  font-family: var(--font-family-primary) !important;
+}
+
+.MuiTypography-body1 {
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.MuiTypography-body2 {
+  font-size: var(--font-size-sm) !important;
+}
+
+.MuiTypography-h6 {
+  font-size: var(--font-size-lg) !important;
+  font-weight: var(--font-weight-bold) !important;
+  letter-spacing: var(--letter-spacing-wide) !important;
+}
+
+/* Button Text - Match Navigation Buttons */
+.MuiButton-root {
+  font-family: var(--font-family-heading) !important;
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  letter-spacing: var(--letter-spacing-wide) !important;
+  text-transform: uppercase;
+}
+
+/* Input Fields - Consistent Typography */
+.MuiTextField-root input,
+.MuiTextField-root textarea,
+.MuiInputBase-input {
+  font-family: var(--font-family-primary) !important;
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-normal) !important;
+}
+
+/* Select Dropdowns */
+.MuiSelect-select {
+  font-family: var(--font-family-primary) !important;
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+/* Checkbox Labels */
+.MuiCheckbox-root + .MuiTypography-root {
+  font-size: var(--font-size-base) !important;
+  font-weight: var(--font-weight-medium) !important;
 }

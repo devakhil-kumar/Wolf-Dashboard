@@ -3,7 +3,7 @@
 import React from 'react';
 import { Box, Tooltip, Typography } from '@mui/material';
 
-const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColumn, tierThresholds, kpiTarget, isPPNCombined, ppnCombinedData }) => {
+const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColumn, tierThresholds, kpiTarget, isPPNCombined, ppnCombinedData, isBundleNew, bundleNewData }) => {
   // Light Theme Colors for Content
   const themeColors = {
     primary: '#2C3E50',       // Professional dark blue-gray
@@ -142,7 +142,7 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
     // Handle combined PPN columns (6 and 7) showing total achievement
     const col6Value = parseFloat(ppnCombinedData.column6Value) || 0;
     const col7Value = parseFloat(ppnCombinedData.column7Value) || 0;
-    const combinedTotal = col6Value + col7Value;
+    const combinedTotal = col6Value ;
     
     color = combinedTotal >= numericTarget ? themeColors.success : themeColors.error;
     backgroundColor = combinedTotal >= numericTarget ? themeColors.success + '20' : themeColors.errorLight + '30';
@@ -153,24 +153,59 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
           PPN Target Achievement
         </Typography>
         <Typography variant="body2">
-          PPN: {col6Value}
+          Consumer: {col6Value-col7Value}
         </Typography>
         <Typography variant="body2">
-          SB PPN: {col7Value}
+          Business (SB PPN): {col7Value}
         </Typography>
-        <Typography variant="body2" sx={{ 
-          borderTop: '1px solid #ddd', 
-          pt: 0.5, 
-          mt: 0.5, 
-          fontWeight: 'bold' 
+        <Typography variant="body2" sx={{
+          borderTop: '1px solid #ddd',
+          pt: 0.5,
+          mt: 0.5,
+          fontWeight: 'bold'
         }}>
-          Combined Total: {combinedTotal}
+          Total: {combinedTotal}
         </Typography>
-        <Typography variant="body2" sx={{ 
+        <Typography variant="body2" sx={{
           // color: combinedTotal >= numericTarget ? themeColors.success : themeColors.error2,
           fontWeight: 'bold'
         }}>
           Target: {target} ({combinedTotal >= numericTarget ? '✓ Achieved' : '✗ Not Achieved'})
+        </Typography>
+      </Box>
+    );
+  } else if (isBundleNew && bundleNewData) {
+    // Handle Bundle New showing split between consumer and business
+    const bundleNewTotal = parseFloat(bundleNewData.bundleNewTotal) || 0;
+    const sbNbnValue = parseFloat(bundleNewData.sbNbnValue) || 0;
+    const consumerValue = bundleNewTotal - sbNbnValue;
+
+    color = bundleNewTotal >= numericTarget ? themeColors.success : themeColors.error;
+    backgroundColor = bundleNewTotal >= numericTarget ? themeColors.success + '20' : themeColors.errorLight + '30';
+
+    tooltipContent = (
+      <Box sx={{ p: 0.5 }}>
+        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+          Bundle New Target Achievement
+        </Typography>
+        <Typography variant="body2">
+          Consumer: {consumerValue}
+        </Typography>
+        <Typography variant="body2">
+          Business (SB NBN): {sbNbnValue}
+        </Typography>
+        <Typography variant="body2" sx={{
+          borderTop: '1px solid #ddd',
+          pt: 0.5,
+          mt: 0.5,
+          fontWeight: 'bold'
+        }}>
+          Total: {bundleNewTotal}
+        </Typography>
+        <Typography variant="body2" sx={{
+          fontWeight: 'bold'
+        }}>
+          Target: {target} ({bundleNewTotal >= numericTarget ? '✓ Achieved' : '✗ Not Achieved'})
         </Typography>
       </Box>
     );

@@ -566,7 +566,7 @@ const READ_ONLY_EMAILS = [
   const columns = headerNames.map((header, index) => ({
     id: `column-${index}`,
     label: header,
-    minWidth: 120,
+    minWidth: 90,
     align: "center",
     format: (value) => value,
   }));
@@ -913,9 +913,11 @@ if (target?.productBonuses && target.productBonuses.length > 0) {
 }
 
 console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
-    
+  console.log( rowData["column-0"]);
+    console.log(item.pnncount);
+    console.log( item["mob-new"])
     // FIXED ROW DATA ASSIGNMENT - Proper column positioning without duplicates
-    rowData["column-6"] = (item.pnncount || 0) + (item["mob-new"] || 0);
+    rowData["column-6"] = (item.pnncount || 0) ;
     rowData["column-7"] = item["SB PPN"]|| 0;
     rowData["column-8"] = item.bundelnewcount || 0;
     rowData["column-9"] = item["TMB-NEW (5)"]|| 0;
@@ -1055,7 +1057,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
       percentage: "",
       visible: true,
     },
-    { colSpan: hideColumns ? 1 : 2, align: "center", kpi: "KPIPPN", visible: true },
+    { colSpan:  1, align: "center", kpi: "KPIPPN", visible: true },
 
     { colSpan: 1, align: "center", kpi: "KPIBundle", visible: true },
     { colSpan: 1, align: "center", kpi: "KPITMB", visible: true },
@@ -1073,7 +1075,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
     },
 
     // SB NBN KPI
-    { colSpan: 1, align: "center", kpi: "KPISBNBN", visible: true },
+    // { colSpan: 1, align: "center", kpi: "KPISBNBN", visible: true },
     // Compulsory KPI spanning both Belong NBN and Telstra Plus
     { 
       colSpan: 2, 
@@ -1106,18 +1108,18 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
     overflow: 'hidden',
   };
 
-  const navbarHeight = 30;
+  const navbarHeight = 20;
 
   const paperStyles = {
-    width: '98%',
-    marginTop: `${navbarHeight }px`,
-    marginLeft: '15px',
-    padding: '10px',
+    width: '99%',
+    marginTop: `${navbarHeight}px`,
+    marginLeft: '5px',
+    padding: '4px',
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     minHeight: '200px',
-    height: `calc(100vh - ${navbarHeight + 20}px)`,
+    height: `calc(100vh - ${navbarHeight + 10}px)`,
   };
 
 
@@ -1134,6 +1136,8 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
     bottom: 0,
     backgroundColor: 'var(--color-background)',
     zIndex: 1,
+    fontFamily: "var(--font-family-heading)",
+                             
   };
 
   return (
@@ -1178,31 +1182,30 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
             variant="scrollable"
             scrollButtons="auto"
             aria-label="scrollable auto tabs example"
-            sx={{ minHeight: "48px" }}
+            sx={{ minHeight: "32px" }}
           >
             {tabs.map((tab, index) => (
               <Tab
                 key={index}
                 label={tab}
                 sx={{
-                  minWidth: "120px",
+                  minWidth: "80px",
                   borderRadius: "8px 8px 0 0",
                   borderLeft: "2px solid var(--color-primary)",
                   borderRight: "2px solid var(--color-primary)",
                   borderTop: "2px solid var(--color-primary)",
                   
                   paddingY: "25.5px",
-                  marginRight: "2px",                   
-        
-          paddingX: "24px",
-          fontWeight: "bold",
-          fontSize: "14px",
-          letterSpacing: "0.5px",
-          backgroundColor: "var(--color-primary)", // Professional dark blue-gray
-          color: "var(--color-surface)", // White text on dark tabs
-
+                  marginRight: "2px",
+                  fontFamily: "var(--font-family-heading)",
+                  fontWeight: "var(--font-weight-bold)",
+                  fontSize: "var(--font-size-base)",
+                  letterSpacing: "var(--letter-spacing-wide)",
+                  textTransform: "uppercase",
+                  backgroundColor: "var(--color-primary)",
+                  color: "var(--color-surface)",
                   "&:hover": {
-                     backgroundColor: "var(--color-primary-light)",
+                    backgroundColor: "var(--color-primary-light)",
                     color: "var(--color-surface)",
                   },
                   "&.Mui-selected": {
@@ -1211,17 +1214,22 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                     borderTop: "2px solid var(--color-secondary)",
                     backgroundColor: "var(--color-secondary)",
                     color: "var(--color-surface)",
-                     backgroundColor: "var(--color-secondary)", // Orange selected tab background
-      
-            
-           
                   },
                 }}
               />
             ))}
           </Tabs>
           <Box display="flex" alignItems="center" sx={{ flexShrink: 0 }}>
-            <Typography variant="body1" style={{ marginRight: "8px" }}>
+            <Typography
+              variant="body1"
+              style={{
+                marginRight: "var(--space-sm)",
+                fontFamily: "var(--font-family-primary)",
+                fontSize: "var(--font-size-base)",
+                fontWeight: "var(--font-weight-medium)",
+                letterSpacing: "var(--letter-spacing-normal)",
+              }}
+            >
               Hide Optional Data
             </Typography>
             <Checkbox
@@ -1264,8 +1272,8 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
           </Box>
         </Box>
         {loading || targetLoading ? (
-          <Box sx={{ padding: "20px", textAlign: "center", color: "red" }}>
-            <CircularProgress sx={{ margin: "20px auto", display: "block" }} />
+          <Box sx={{ padding: "5px", textAlign: "center", color: "red" }}>
+            <CircularProgress sx={{ margin: "5px auto", display: "block" }} />
           </Box>
         ) : (
           <>
@@ -1280,10 +1288,24 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                           key={index}
                           colSpan={header.colSpan}
                           align={header.align}
-                          style={{ borderRight: "1px solid var(--color-border)" }}
+                          style={{
+                            borderRight: "1px solid var(--color-border)",
+                            fontFamily: "var(--font-family-heading)",
+                            fontSize: "var(--font-size-base)",
+                            fontWeight: "var(--font-weight-bold)",
+                            letterSpacing: "var(--letter-spacing-wide)",
+                            padding: "var(--space-sm) var(--space-md)",
+                            lineHeight: "var(--line-height-tight)",
+                            textTransform: "uppercase",
+                          }}
                         >
                           {header.kpi && KPITargets && (
-                            <div>
+                            <div style={{
+                              fontFamily: "var(--font-family-heading)",
+                              fontSize: "var(--font-size-md)",
+                              fontWeight: "var(--font-weight-bold)",
+                              letterSpacing: "var(--letter-spacing-normal)",
+                            }}>
                               {KPITargets[header.kpi] != null
                                 ? `${KPITargets[header.kpi]}%`
                                 : "N/A"}
@@ -1297,18 +1319,19 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                   </TableRow>
                   <TableRow>
                     {columns.map((column, index) => {
-                      // Hide Device Security (column 12) always
-                      if (index === 15) {
+                      // Hide Device Security (column 12) always, also hide SB PPN (7) and SB NBN (12)
+                      if (index === 15 || index === 7 || index === 12) {
                         return null;
                       }
 
                       // Apply visibility conditions
                       return (!hideColumns || index > 5 || index < 3) &&
                         (!hideColumns ||
-                          ( index !== 7 &&
+                          (
+                            // index !== 7 &&
                             index !== 10 && // Hide Device Protection when hideColumns is true
                               index !== 11 &&
-                          
+
                             index !== 16 && // Hide Outright
                             index !== 17 && // Hide DPC Mobile/Tablet
                             index !== 18 &&
@@ -1319,10 +1342,16 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                           align={column.align}
                           style={{
                             minWidth: column.minWidth,
-                            fontWeight: "bold",
+                            fontFamily: "var(--font-family-heading)",
+                            fontWeight: "var(--font-weight-bold)",
+                            fontSize: "var(--font-size-sm)",
+                            letterSpacing: "var(--letter-spacing-wide)",
+                            textTransform: "uppercase",
                             color: "var(--navbar-text)",
                             backgroundColor: "var(--color-primary)",
                             border: "1px solid var(--navbar-hover)",
+                            padding: "var(--space-sm) var(--space-md)",
+                            lineHeight: "var(--line-height-tight)",
                           }}
                         >
                           {column.label}
@@ -1352,8 +1381,8 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                               const isEditable = hasFullAccess &&
                                 (colIndex >= 3 && colIndex <= 5);
 
-                              // Hide Device Security (column 12) always
-                              if (colIndex === 15) {
+                              // Hide Device Security (column 15) always, also hide SB PPN (7) and SB NBN (12)
+                              if (colIndex === 15 || colIndex === 7 || colIndex === 12) {
                                 return null;
                               }
 
@@ -1361,7 +1390,8 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                 colIndex > 5 ||
                                 colIndex < 3) &&
                                 (!hideColumns ||
-                                  (colIndex !== 7 &&
+                                  (
+                                    // colIndex !== 7 &&
                                     colIndex !== 10 &&
                                     colIndex !== 11 &&
                                     colIndex !== 16 &&
@@ -1389,6 +1419,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                     border: "1px solid var(--color-border)",
                                     cursor: isEditable ? "pointer" : "default",
                                     textAlign: "center",
+                                    padding: "6px 6px",
                                   }}
                                 >
                                   {editingCell &&
@@ -1478,6 +1509,13 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                             column7Value: row["column-7"]
                                           } : null
                                         }
+                                        isBundleNew={column.id === "column-8"}
+                                        bundleNewData={
+                                          column.id === "column-8" ? {
+                                            bundleNewTotal: row["column-8"],
+                                            sbNbnValue: row["column-12"]
+                                          } : null
+                                        }
                                       />
                                     </Box>
                                   ) : column.id === "column-26" ? ( // Product Incentive - with tooltip
@@ -1526,13 +1564,14 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                       )}
                   <TableRow sx={stickyFooterStyles}>
                     {totals.map((total, index) => {
-                      // Hide Device Security (column 12) always
-                      if (index === 15) {
+                      // Hide Device Security (column 15) always, also hide SB PPN (7) and SB NBN (12)
+                      if (index === 15 || index === 7 || index === 12) {
                         return null;
                       }
                       return (!hideColumns || index > 5 || index < 3) &&  
                         (!hideColumns ||
-                          (index !== 7 &&
+                          (
+                            // index !== 7 &&
                             index !== 10 &&
                             index !== 11 &&
                             index !== 16 &&
@@ -1543,13 +1582,18 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                         <TableCell
                           key={index}
                           align="center"
-                          style={{
+                          sx={{
                             position: "sticky",
                             bottom: 0,
                             backgroundColor: "var(--color-primary)",
-                            fontWeight: "bold",
-                            color: "var(--color-surface)",
+                            fontFamily: "var(--font-family-heading) !important",
+                            fontWeight: "var(--font-weight-bold) !important",
+                            fontSize: "var(--font-size-base) !important",
+                            letterSpacing: "var(--letter-spacing-wide) !important",
+                            textTransform: "uppercase !important",
+                            color: "var(--color-surface) !important",
                             borderTop: "1px solid var(--color-primary)",
+                            padding: "var(--space-sm) var(--space-md)",
                           }}
                         >
                           {/* FIXED TOTALS DOLLAR FORMATTING for repositioned columns */}
@@ -1577,7 +1621,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
               page={page}
               onPageChange={handleChangePage}
               onRowsPerPageChange={handleChangeRowsPerPage}
-              sx={{ flexShrink: 0 }}
+              sx={{ flexShrink: 0, padding: '4px 8px', minHeight: '40px' }}
             />
           </>
         )}
