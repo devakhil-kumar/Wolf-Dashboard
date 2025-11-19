@@ -126,33 +126,80 @@ export const deleteTarget = async (req, res) => {
   }
 };
 
+
+
 export const getTarget = async (req, res) => {
-  const {salelocation, startDate, endDate } = req.query;
-  const parseDate = (dateStr) => {
+  const { salelocation, startDate, endDate } = req.query;
+
+  // parseDate: dateStr in "DD/MM/YY" or "DD/MM/YYYY"
+  const parseDate = (dateStr, endOfDay = false) => {
     const [day, month, year] = dateStr.trim().split("/");
-    const fullYear = year.length === 2 ? `20${year}` : year; // Convert two-digit year to four-digit year if necessary
-    return new Date(`${fullYear}-${month}-${day}`);
+    const fullYear = year.length === 2 ? `20${year}` : year;
+    // Use UTC to avoid local timezone offsets
+    const d = new Date(Date.UTC(+fullYear, +month - 1, +day));
+    if (endOfDay) {
+      d.setUTCHours(23, 59, 59, 999);
+    } else {
+      d.setUTCHours(0, 0, 0, 0);
+    }
+    return d;
   };
+
   try {
+    // Debug logs (remove in production if not needed)
+    console.log("Parsed startDate:", parseDate(startDate));
+    console.log("Parsed endDate (endOfDay):", parseDate(endDate, true));
+
+    // Strategy: return the latest Target whose createdDate is ON or BEFORE endDate
+    const end = parseDate(endDate, true);
+
     const storedtarget = await Target.findOne({
       salelocation: { $regex: new RegExp(salelocation, "i") },
-      createdDate: {
-        $gte: parseDate(startDate),
-        $lte: parseDate(endDate),
-      },
-    });
+      createdDate: { $lte: end },
+    }).sort({ createdDate: -1 }); // most recent first
+
+    if (!storedtarget) {
+      return res.status(404).json({ message: "No target found for this store." });
+    }
 
     return res.status(200).json({ target: storedtarget });
   } catch (error) {
-    if (error.message === "Not Found") {
-      return res
-        .status(404)
-        .json({ message: "No target found for this store." });
-    } else {
-      return res.status(500).json({ message: "Internal Server Error" });
-    }
+    console.error("getTarget error:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+
+
+
+// export const getTarget = async (req, res) => {
+//   const {salelocation, startDate, endDate } = req.query;
+//   const parseDate = (dateStr) => {
+//     const [day, month, year] = dateStr.trim().split("/");
+//     const fullYear = year.length === 2 ? `20${year}` : year; // Convert two-digit year to four-digit year if necessary
+//     return new Date(`${fullYear}-${month}-${day}`);
+//   };
+//   try {
+//     const storedtarget = await Target.findOne({
+//       salelocation: { $regex: new RegExp(salelocation, "i") },
+//       createdDate: {
+//         $gte: parseDate(startDate),
+//         $lte: parseDate(endDate),
+//       },
+//     });
+
+//     return res.status(200).json({ target: storedtarget });
+//   } catch (error) {
+//     if (error.message === "Not Found") {
+//       return res
+//         .status(404)
+//         .json({ message: "No target found for this store." });
+//     } else {
+//       return res.status(500).json({ message: "Internal Server Error" });
+//     }
+//   }
+// };
 
 export const getTargets = async (req, res) => {
   const { startDate, endDate } = req.query;

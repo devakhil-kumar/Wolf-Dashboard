@@ -74,33 +74,70 @@ export const deleteKPI = async (req, res) => {
   }
 };
 
+
+
+
 export const getKPI = async (req, res) => {
   const { salelocation, startDate, endDate } = req.query;
-  const parseDate = (dateStr) => {
+
+  const parseDate = (dateStr, endOfDay = false) => {
     const [day, month, year] = dateStr.trim().split("/");
     const fullYear = year.length === 2 ? `20${year}` : year;
-    return new Date(`${fullYear}-${month}-${day}`);
+    const d = new Date(Date.UTC(+fullYear, +month - 1, +day));
+    if (endOfDay) d.setUTCHours(23, 59, 59, 999);
+    return d;
   };
+
   try {
+    // find latest KPI created ON or BEFORE endDate
+    const end = parseDate(endDate, true);
     const storedKPI = await KPI.findOne({
       salelocation: { $regex: new RegExp(salelocation, "i") },
-      createdDate: {
-        $gte: parseDate(startDate),
-        $lte: parseDate(endDate),
-      },
-    });
-    console.log("result:",storedKPI)
-    console.log("storedKPI:", storedKPI, typeof storedKPI);
-    if (!storedKPI && storedKPI !== null) {
-      console.log("here404:")
+      createdDate: { $lte: end }
+    }).sort({ createdDate: -1 });
+
+    if (!storedKPI) {
       return res.status(404).json({ message: "No KPI target found for this store." });
     }
 
     return res.status(200).json({ kpi: storedKPI });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
+
+
+// export const getKPI = async (req, res) => {
+//   const { salelocation, startDate, endDate } = req.query;
+//   const parseDate = (dateStr) => {
+//     const [day, month, year] = dateStr.trim().split("/");
+//     const fullYear = year.length === 2 ? `20${year}` : year;
+//     return new Date(`${fullYear}-${month}-${day}`);
+//   };
+//   try {
+//     const storedKPI = await KPI.findOne({
+//       salelocation: { $regex: new RegExp(salelocation, "i") },
+//       createdDate: {
+//         $gte: parseDate(startDate),
+//         $lte: parseDate(endDate),
+//       },
+//     });
+//     console.log("result:",storedKPI)
+//     console.log("storedKPI:", storedKPI, typeof storedKPI);
+//     if (!storedKPI && storedKPI !== null) {
+//       console.log("here404:")
+//       return res.status(404).json({ message: "No KPI target found for this store." });
+//     }
+
+//     return res.status(200).json({ kpi: storedKPI });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// };
+
 
 export const getKPIs = async (req, res) => {
   const { startDate, endDate } = req.query;
