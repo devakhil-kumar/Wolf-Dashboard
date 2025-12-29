@@ -6,6 +6,8 @@ import {createAdmin,resetAdminPassword, deleteAdmin, getAllAdmins, login} from "
 import { createNPS, deleteNPS, getAllNPS, getNPS, updateNPS } from "../controller/nps.js";
 import { createCommission,updateCommission,getCommission } from "../controller/commission.js";
 import { getKPIs, getKPI, createKPI, updateKPI, updateAllKPI, deleteKPI } from '../controller/KPIController.js';
+import { createProrataStaff, deleteProrataStaff, getProrataStaff, getAllProrataStaff, updateProrataStaff } from '../controller/prorataStaff.js';
+import { syncStaffFromExternal, getStaffByLocation, getAllStaff, addStaff, updateStaff, deleteStaff } from '../controller/staff.js';
 
 const router= express.Router();
 // authentication routes ====================>
@@ -75,7 +77,22 @@ router.post("/kpi", createKPI);
 router.patch("/kpi/:id", updateKPI);
 router.put("/kpi/all", updateAllKPI);
 router.delete("/kpi/:id", deleteKPI);
-      
+
+    // Pro-Rata Staff routes ====================>
+    router.get("/prorata-staff/all", getAllProrataStaff);
+    router.get("/prorata-staff", getProrataStaff);
+    router.post("/prorata-staff", createProrataStaff);
+    router.patch("/prorata-staff/:id", updateProrataStaff);
+    router.delete("/prorata-staff/:id", deleteProrataStaff);
+
+    // Staff routes ====================>
+    router.get("/staff/sync", syncStaffFromExternal);  // Sync staff from external API
+    router.get("/staff/all", getAllStaff);  // Get all staff
+    router.get("/staff", getStaffByLocation);  // Get staff by location
+    router.post("/staff", addStaff);  // Manually add staff
+    router.patch("/staff/:id", updateStaff);  // Update staff
+    router.delete("/staff/:id", deleteStaff);  // Delete staff
+
       // router.get( "/test", fetchData); 
 
 
