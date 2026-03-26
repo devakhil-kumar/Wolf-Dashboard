@@ -175,10 +175,11 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
       </Box>
     );
   } else if (isBundleNew && bundleNewData) {
-    // Handle Bundle New showing split between consumer and business
+    // Handle Bundle New showing split between consumer, business, and Internet Only
     const bundleNewTotal = parseFloat(bundleNewData.bundleNewTotal) || 0;
     const sbNbnValue = parseFloat(bundleNewData.sbNbnValue) || 0;
-    const consumerValue = bundleNewTotal - sbNbnValue;
+    const internetOnlyValue = parseFloat(bundleNewData.internetOnlyValue) || 0;
+    const consumerValue = bundleNewTotal - sbNbnValue - internetOnlyValue;
 
     color = bundleNewTotal >= numericTarget ? themeColors.success : themeColors.error;
     backgroundColor = bundleNewTotal >= numericTarget ? themeColors.success + '20' : themeColors.errorLight + '30';
@@ -193,6 +194,9 @@ const CircularIndicator = ({ value, displayValue, target, isDpcColumn, isGPColum
         </Typography>
         <Typography variant="body2">
           Business (SB NBN): {sbNbnValue}
+        </Typography>
+        <Typography variant="body2">
+          Internet Only: {internetOnlyValue}
         </Typography>
         <Typography variant="body2" sx={{
           borderTop: '1px solid #ddd',

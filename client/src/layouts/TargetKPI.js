@@ -282,11 +282,11 @@ const TargetKPI = () => {
                 <Paper elevation={2} sx={{ p: 1.5, height: '100%' }}>
                   <Typography variant="subtitle1" gutterBottom>KPI Targets</Typography>
                   {renderTextField("PPN % Target", "KPIPPN", 0, 100)}
-                  {renderTextField("Bundle % Target", "KPIBundle", 0, 100)}
-                  {renderTextField("TMB % Target", "KPITMB", 0, 100)}
+                  {renderTextField("Internet NEW % Target", "KPIBundle", 0, 100)}
+                  {renderTextField("MBB % Target", "KPITMB", 0, 100)}
                   {renderTextField("SB NBN % Target", "KPISBNBN", 0, 100)}
-                  {renderTextField("TWD % Target", "KPITWD", 0, 100)}
-                  {renderTextField("DPC % Target", "KPIDPC", 0, 100)}
+                  {renderTextField("Compulsory % Target", "KPITWD", 0, 100)}
+                  {renderTextField("U&P % Target", "KPIDPC", 0, 100)}
                   {renderTextField("Accessory GP % Target", "KPIACCGP", 0, 100)}
                   {totalError && (
                     <Typography color="error" variant="body2" sx={{ mt: 1 }}>

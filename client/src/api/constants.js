@@ -18,5 +18,15 @@ export const API_ROUTES = {
   GET_COMMISSION:'/getcomission',
   CREATE_COMMISSION:'/createcommission',
   UPDATE_COMMISSION:'/updatecommission',
+  CREATE_PRORATA_STAFF:'/prorata-staff',
+  GET_PRORATA_STAFF:'/prorata-staff',
+  UPDATE_PRORATA_STAFF:'/prorata-staff',
+  DELETE_PRORATA_STAFF:'/prorata-staff',
+  SYNC_STAFF:'/staff/sync',
+  GET_ALL_STAFF:'/staff/all',
+  GET_STAFF_BY_LOCATION:'/staff',
+  ADD_STAFF:'/staff',
+  UPDATE_STAFF:'/staff',
+  DELETE_STAFF:'/staff',
     // Add more routes here as needed
   };

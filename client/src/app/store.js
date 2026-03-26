@@ -5,7 +5,8 @@ import KPITargetReducer from '../features/kpiTargetSlice';
 import adminReducer from '../features/adminSlice';
 import authReducer from '../features/authSlice';
 import npsReducer from '../features/npsSlice';
-import commissionReducer from '../features/commissionSlice'; 
+import commissionReducer from '../features/commissionSlice';
+import prorataStaffReducer from '../features/prorataStaffSlice'; 
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     auth: authReducer,
     nps: npsReducer,
     commission: commissionReducer,
+    prorataStaff: prorataStaffReducer,
   },
 })

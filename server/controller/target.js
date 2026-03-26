@@ -241,7 +241,7 @@ export const getAvailableProducts = async (req, res) => {
     const availableProducts = [
       'PPN',
       'SB PPN',
-      'Bundle New',
+      'Internet NEW',
       'TMB',
       'Device Protection',
       'Belong PPN',

@@ -17,6 +17,7 @@ import {
   Checkbox,
   Typography,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import Navbar from "../components/Navbar";
 import EnhancedExportComponent from '../components/EnhancedExportComponent'
@@ -35,6 +36,7 @@ import DateInputs from "../components/DateInputs";
 import CircularIndicator from "../components/CircularIndicator";
 import { getTargetThunk } from "../features/targetSlice";
 import { getKPITargetThunk } from "../features/kpiTargetSlice";
+import { getProrataStaffThunk } from "../features/prorataStaffSlice";
 import FortnightDropdown from "../components/FortnightDropdown";
 import {
   calculateYearlyFortnights,
@@ -87,7 +89,7 @@ export default function Dashboard() {
   const { data, message, loading, error } = useSelector(
     (state) => state.tableData
   );
-  // console.log(data)
+  console.log("dataatatatatata",data)
   const {
     target,
     loading: targetLoading,
@@ -105,6 +107,9 @@ export default function Dashboard() {
     loading: commissionLoading,
     error: commissionError,
   } = useSelector((state) => state.commission);
+
+  // Pro-Rata Staff data
+  const { staffList: prorataStaffList } = useSelector((state) => state.prorataStaff);
 
 // Add auth state from Redux
 const { user, isCreateUserAllowed } = useSelector((state) => state.auth);
@@ -335,7 +340,16 @@ const READ_ONLY_EMAILS = [
     const endDate = toDate.split("-").reverse().join("/");
     dispatch(getAllNpsThunk({ startDate, endDate }));
     dispatch(getAllCommissionsThunk({ startDate, endDate }));
-  }, [createNpsThunk, updateNpsThunk, dispatch, selectedFortnight]);
+
+    // Fetch pro-rata staff for current tab/location
+    if (selectedTab.value && selectedTab.value !== "All Stores") {
+      dispatch(getProrataStaffThunk({
+        salelocation: selectedTab.value,
+        startDate,
+        endDate
+      }));
+    }
+  }, [createNpsThunk, updateNpsThunk, dispatch, selectedFortnight, selectedTab.value]);
 
   useEffect(() => {
     fetchData();
@@ -539,8 +553,8 @@ const READ_ONLY_EMAILS = [
     "Detr <6",
     `PPN (${target?.ppn || "N/A"})`,
      `SB PPN `,
-    `Bundle New (${target?.bundel || "N/A"})`,
-    `TMB (${target?.tmb || "N/A"})`,
+    `Internet NEW (${target?.bundel || "N/A"})`,
+    `MBB (${target?.tmb || "N/A"})`,
     "Device Protection",
     `Belong PPN `,
      `SB NBN (${target?.sbNbn || "N/A"})`, 
@@ -573,12 +587,58 @@ const READ_ONLY_EMAILS = [
 
   const tabs = ["All Stores", "Traralgon", "Warragul", "Torquay"];
 
+  // Helper functions for Pro-Rata Staff
+  const isProrataStaff = (salesrepName) => {
+    if (!prorataStaffList || !salesrepName) return false;
+    return prorataStaffList.some(staff => staff.salesrep === salesrepName);
+  };
+
+  const getProrataTargets = (salesrepName) => {
+    if (!prorataStaffList || !salesrepName) return null;
+    return prorataStaffList.find(staff => staff.salesrep === salesrepName);
+  };
+
+  const getEffectiveTargets = (salesrepName) => {
+    const prorataTargets = getProrataTargets(salesrepName);
+
+    // If prorata targets exist and are not null, use them; otherwise use store targets
+    if (prorataTargets) {
+      return {
+        dpc: prorataTargets.dpc ?? target?.dpc,
+        ppn: prorataTargets.ppn ?? target?.ppn,
+        bundel: prorataTargets.bundel ?? target?.bundel,
+        tmb: prorataTargets.tmb ?? target?.tmb,
+        tyro: prorataTargets.tyro ?? target?.tyro,
+        sbNbn: prorataTargets.sbNbn ?? target?.sbNbn,
+        websitebas: prorataTargets.websitebas ?? target?.websitebas,
+        AcceGP_Handset_Sales: prorataTargets.AcceGP_Handset_Sales ?? target?.AcceGP_Handset_Sales,
+        gpGreenTarget: prorataTargets.gpGreenTarget ?? target?.gpGreenTarget,
+        gpTier2Threshold: prorataTargets.gpTier2Threshold ?? target?.gpTier2Threshold,
+        gpTier3Threshold: prorataTargets.gpTier3Threshold ?? target?.gpTier3Threshold,
+        productBonuses: prorataTargets.productBonuses ?? target?.productBonuses,
+        isProrataStaff: true
+      };
+    }
+
+    // Return store targets if no prorata targets
+    return {
+      ...target,
+      isProrataStaff: false
+    };
+  };
+
   const rows = data?.map((item) => {
+    const salesrepName = item.salesrep === "" || item.salesrep === null
+      ? "unknown salesrep"
+      : item.salesrep;
+
+    // Get effective targets for this salesrep (prorata or store targets)
+    const effectiveTargets = getEffectiveTargets(salesrepName);
+
     const rowData = {
-      "column-0":
-        item.salesrep === "" || item.salesrep === null
-          ? "unknown salesrep"
-          : item.salesrep,
+      "column-0": salesrepName,
+      "_isProrataStaff": effectiveTargets.isProrataStaff,
+      "_effectiveTargets": effectiveTargets,
     };
 
     // Find all matching NPS rows for the current salesrep
@@ -657,45 +717,45 @@ const READ_ONLY_EMAILS = [
       return isFinite(calculatedValue) ? Math.round(calculatedValue) : "N/A";
     })();
 
-    // Calculate KPI score
+    // Calculate KPI score using effective targets (prorata or store)
     let kpiScore = 0;
 
     // PPN KPI
-    if (((item.pnncount || 0) + (item["mob-new"] || 0)) >= (target?.ppn !== null ? target?.ppn : 0)) {
+    if (((item.pnncount || 0) + (item["mob-new"] || 0)) >= (effectiveTargets?.ppn !== null ? effectiveTargets?.ppn : 0)) {
       kpiScore += KPITargets.KPIPPN !== null ? KPITargets.KPIPPN : 0;
       // console.log(kpiScore,"kpiScore")
     }
 
     // New Bundles KPI
-    if (item.bundelnewcount >= (target?.bundel !== null ? target?.bundel : 0)) {
+    if (item.bundelnewcount >= (effectiveTargets?.bundel !== null ? effectiveTargets?.bundel : 0)) {
       kpiScore += KPITargets.KPIBundle !== null ? KPITargets.KPIBundle : 0;
       // console.log(kpiScore,"kpiScore")
     }
-    
-    // TMB KPI
-    if (item["TMB-NEW (5)"] >= (target?.tmb !== null ? target?.tmb : 0)) {
+
+    // MBB KPI
+    if (item["TMB-NEW (5)"] >= (effectiveTargets?.tmb !== null ? effectiveTargets?.tmb : 0)) {
       kpiScore += KPITargets.KPITMB !== null ? KPITargets.KPITMB : 0;
       // console.log(kpiScore,"kpiScore")
     }
 
     // SB NBN KPI
-    if (item["SB NBN"] >= (target?.sbNbn !== null ? target?.sbNbn : 0)) {
+    if (item["SB NBN"] >= (effectiveTargets?.sbNbn !== null ? effectiveTargets?.sbNbn : 0)) {
       kpiScore += KPITargets.KPISBNBN !== null ? KPITargets.KPISBNBN : 0;
       // console.log(kpiScore,"kpiScore")
     }
 
     // FIXED COMPULSORY KPI LOGIC - Use Belong NBN instead of Tyro
     if (
-      item["Belong NBN"] >= (target?.tyro !== null ? target?.tyro : 0)
+      item["Belong NBN"] >= (effectiveTargets?.tyro !== null ? effectiveTargets?.tyro : 0)
       &&
-      item["Telstra Plus"] >= (target?.websitebas !== null ? target?.websitebas : 0)
+      item["Telstra Plus"] >= (effectiveTargets?.websitebas !== null ? effectiveTargets?.websitebas : 0)
     ) {
       kpiScore += KPITargets.KPITWD !== null ? KPITargets.KPITWD : 0;
       // console.log(kpiScore,"kpiScore")
     }
 
     // Device Protection KPI
-    if (parseFloat(column17Value) >= (target?.dpc !== null ? target?.dpc : 0)) {
+    if (parseFloat(column17Value) >= (effectiveTargets?.dpc !== null ? effectiveTargets?.dpc : 0)) {
       kpiScore += KPITargets.KPIDPC !== null ? KPITargets.KPIDPC : 0;
       // console.log(kpiScore,"kpiScore")
     }
@@ -703,7 +763,7 @@ const READ_ONLY_EMAILS = [
     // Accessory GP to Device KPI
     if (
       parseFloat(columnACCValue) >=
-      (target?.AcceGP_Handset_Sales !== null ? target?.AcceGP_Handset_Sales : 0)
+      (effectiveTargets?.AcceGP_Handset_Sales !== null ? effectiveTargets?.AcceGP_Handset_Sales : 0)
     ) {
       kpiScore += KPITargets.KPIACCGP !== null ? KPITargets.KPIACCGP : 0;
       // console.log(kpiScore,"kpiScore")
@@ -713,22 +773,22 @@ const READ_ONLY_EMAILS = [
 
 let commission;
 
-// First check if gross profit meets minimum threshold
-if (item.grossprofit < (target?.gpGreenTarget || 12000)) {
+// First check if gross profit meets minimum threshold (using effective targets)
+if (item.grossprofit < (effectiveTargets?.gpGreenTarget || 12000)) {
   commission = "Not Eligible";
-  // console.log(`Commission: Not Eligible | Reason: Gross Profit (${item.grossprofit}) < Minimum Threshold (${target?.gpGreenTarget || 12000})`);
-} 
+  // console.log(`Commission: Not Eligible | Reason: Gross Profit (${item.grossprofit}) < Minimum Threshold (${effectiveTargets?.gpGreenTarget || 12000})`);
+}
 // Then check if KPI score meets minimum requirement
 else if (kpiScore >= KPITargets.KPIMAIN) {
-  // Determine commission percentage based on GP tier
+  // Determine commission percentage based on GP tier (using effective targets)
   let commissionPercentage;
-  
+
   // Tier 3 (highest)
-  if (item.grossprofit >= (target?.gpTier3Threshold || 16000)) {
+  if (item.grossprofit >= (effectiveTargets?.gpTier3Threshold || 16000)) {
     commissionPercentage = KPITargets.GPTier3Percentage;
-  } 
+  }
   // Tier 2 (middle)
-  else if (item.grossprofit >= (target?.gpTier2Threshold || 14000)) {
+  else if (item.grossprofit >= (effectiveTargets?.gpTier2Threshold || 14000)) {
     commissionPercentage = KPITargets.GPTier2Percentage;
   }
   // Tier 1 (lowest qualifying tier)
@@ -812,20 +872,20 @@ if (!isCurrentMonth) {
     `Current Month: ${selectedFromDate.toLocaleDateString()}, Current GP: ${currentGP}, Days passed: ${daysPassed}/${totalDaysInMonth}, Forecasted GP: ${forecastedMonthlyGP}`
   );
 
-  // Case 1: GP is below minimum requirement → No forecast
+  // Case 1: GP is below minimum requirement → No forecast (using effective targets)
   if (
-    currentGP < (target?.gpGreenTarget || 12000) &&
-    forecastedMonthlyGP < (target?.gpGreenTarget || 12000)
+    currentGP < (effectiveTargets?.gpGreenTarget || 12000) &&
+    forecastedMonthlyGP < (effectiveTargets?.gpGreenTarget || 12000)
   ) {
     potentialCommission = "Reach Min GP First";
     console.log("Minimum GP not reached. KPI Score:", kpiScore);
 
-  // Case 2: Forecast GP qualifies for commission tiers
+  // Case 2: Forecast GP qualifies for commission tiers (using effective targets)
   } else {
     let commissionPercentage;
-    if (forecastedMonthlyGP >= (target?.gpTier3Threshold || 16000)) {
+    if (forecastedMonthlyGP >= (effectiveTargets?.gpTier3Threshold || 16000)) {
       commissionPercentage = KPITargets.GPTier3Percentage; // Tier 3
-    } else if (forecastedMonthlyGP >= (target?.gpTier2Threshold || 14000)) {
+    } else if (forecastedMonthlyGP >= (effectiveTargets?.gpTier2Threshold || 14000)) {
       commissionPercentage = KPITargets.GPTier2Percentage; // Tier 2
     } else {
       commissionPercentage = KPITargets.GPCommissionPercentage; // Tier 1
@@ -842,12 +902,12 @@ if (!isCurrentMonth) {
 }
 
 
-// Calculate Product Incentive based on product sales and bonus values
+// Calculate Product Incentive based on product sales and bonus values (using effective targets)
 let productIncentive = 0;
 let productIncentiveBreakdown = [];
 
-if (target?.productBonuses && target.productBonuses.length > 0) {
-  target.productBonuses.forEach(bonus => {
+if (effectiveTargets?.productBonuses && effectiveTargets.productBonuses.length > 0) {
+  effectiveTargets.productBonuses.forEach(bonus => {
     let productSales = 0;
     let productName = bonus.product;
 
@@ -862,7 +922,11 @@ if (target?.productBonuses && target.productBonuses.length > 0) {
       case 'Bundle New':
         productSales = item.bundelnewcount || 0;
         break;
-      case 'TMB':
+      case 'Internet NEW':
+      case 'Internet Only':
+        productSales = item["New Bundle/New Internet"] || 0;
+        break;
+      case 'MBB':
         productSales = item["TMB-NEW (5)"] || 0;
         break;
       case 'Device Protection':
@@ -885,6 +949,9 @@ if (target?.productBonuses && target.productBonuses.length > 0) {
         break;
       case 'Outright Mobile/Tablet Inc Prepaid':
         productSales = item.outriCount || 0;
+        break;
+      case 'U&P Mobile/Tablet':
+        productSales = item.upgrade || 0;
         break;
       case 'DPC Mobile/Tablet':
         productSales = item.dcpcount || 0;
@@ -919,7 +986,9 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
     // FIXED ROW DATA ASSIGNMENT - Proper column positioning without duplicates
     rowData["column-6"] = (item.pnncount || 0) ;
     rowData["column-7"] = item["SB PPN"]|| 0;
-    rowData["column-8"] = item.bundelnewcount || 0;
+    // rowData["column-8"] = item.bundelnewcount || 0;
+    rowData["column-8"] =
+  (item.bundelnewcount || 0) + (item["New Bundle/New Internet"] || 0);
     rowData["column-9"] = item["TMB-NEW (5)"]|| 0;
     rowData["column-10"] = (item["Upgrade & Protect Plus (Stay Connected)"] || 0) +
       (item["Stay Connected"] || 0);
@@ -947,6 +1016,80 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
 
     return rowData;
   });
+
+  // Calculate PPN breakdown totals for tooltip
+  const calculatePPNBreakdown = () => {
+    let totalPPN = 0;
+    let totalSbPPN = 0;
+    let accumulatedTarget = 0;
+
+    data?.forEach((item) => {
+      const ppnCount = parseFloat(item.pnncount) || 0;
+      const sbPPN = parseFloat(item["SB PPN"]) || 0;
+
+      totalPPN += ppnCount;
+      totalSbPPN += sbPPN;
+    });
+
+    // Calculate accumulated store target from all staff's effective targets
+    rows?.forEach((row) => {
+      const effectiveTarget = row["_effectiveTargets"]?.ppn;
+      if (effectiveTarget != null) {
+        accumulatedTarget += effectiveTarget;
+      }
+    });
+
+    const totalConsumer = totalPPN - totalSbPPN;
+
+    return {
+      total: totalPPN,
+      consumer: totalConsumer,
+      sbPPN: totalSbPPN,
+      target: target?.ppn || 0,
+      accumulatedTarget: accumulatedTarget
+    };
+  };
+
+  const ppnTotals = calculatePPNBreakdown();
+
+  // Calculate Bundle New breakdown totals for tooltip
+  const calculateBundleNewBreakdown = () => {
+    let totalBundleNew = 0;
+    let totalSbNbn = 0;
+    let totalInternetOnly = 0;
+    let accumulatedTarget = 0;
+
+    data?.forEach((item) => {
+      const bundleNewCount = parseFloat(item.bundelnewcount) || 0;
+      const internetOnly = parseFloat(item["New Bundle/New Internet"]) || 0;
+      const sbNbn = parseFloat(item["SB NBN"]) || 0;
+
+      totalBundleNew += bundleNewCount + internetOnly;
+      totalSbNbn += sbNbn;
+      totalInternetOnly += internetOnly;
+    });
+
+    // Calculate accumulated store target from all staff's effective targets
+    rows?.forEach((row) => {
+      const effectiveTarget = row["_effectiveTargets"]?.bundel;
+      if (effectiveTarget != null) {
+        accumulatedTarget += effectiveTarget;
+      }
+    });
+
+    const totalConsumer = totalBundleNew - totalSbNbn - totalInternetOnly;
+
+    return {
+      total: totalBundleNew,
+      consumer: totalConsumer,
+      sbNbn: totalSbNbn,
+      internetOnly: totalInternetOnly,
+      target: target?.bundel || 0,
+      accumulatedTarget: accumulatedTarget
+    };
+  };
+
+  const bundleNewTotals = calculateBundleNewBreakdown();
 
   const calculateTotals = () => {
     let totalStayConnected = 0;
@@ -1451,16 +1594,58 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                     column.id === "column-12" || // Belong NBN
                                     column.id === "column-13" || // Telstra Plus
                                     column.id === "column-14" ||
-                                    column.id === "column-19" || // DPC percentage  
+                                    column.id === "column-19" || // DPC percentage
                                     column.id === "column-20" || // Accessory GP
                                     column.id === "column-23" ? ( // Total GP
-                                    <Box
-                                      display="flex"
-                                      justifyContent="center"
-                                      alignItems="center"
-                                      width="100%"
+                                    <Tooltip
+                                      title={
+                                        row["_isProrataStaff"] && row["_effectiveTargets"] ? (
+                                          <div>
+                                            <strong>Pro-Rata Targets:</strong>
+                                            {column.id === "column-6" && (
+                                              <div>PPN: {row["_effectiveTargets"].ppn ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-8" && (
+                                              <div>Bundle: {row["_effectiveTargets"].bundel ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-9" && (
+                                              <div>MBB: {row["_effectiveTargets"].tmb ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-12" && (
+                                              <div>SB NBN: {row["_effectiveTargets"].sbNbn ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-13" && (
+                                              <div>Belong NBN: {row["_effectiveTargets"].tyro ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-14" && (
+                                              <div>Telstra Plus: {row["_effectiveTargets"].websitebas ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-19" && (
+                                              <div>DPC %: {row["_effectiveTargets"].dpc ?? "Using store target"}%</div>
+                                            )}
+                                            {column.id === "column-20" && (
+                                              <div>Acc GP to Handset: ${row["_effectiveTargets"].AcceGP_Handset_Sales ?? "Using store target"}</div>
+                                            )}
+                                            {column.id === "column-23" && (
+                                              <div>
+                                                <div>Tier 1: ${row["_effectiveTargets"].gpGreenTarget ?? "Using store target"}</div>
+                                                <div>Tier 2: ${row["_effectiveTargets"].gpTier2Threshold ?? "Using store target"}</div>
+                                                <div>Tier 3: ${row["_effectiveTargets"].gpTier3Threshold ?? "Using store target"}</div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        ) : ""
+                                      }
+                                      arrow
+                                      placement="top"
                                     >
-                                      <CircularIndicator
+                                      <Box
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        width="100%"
+                                      >
+                                        <CircularIndicator
                                         value={
                                           (column.id === "column-20" || column.id === "column-23") && value !== "N/A"
                                             ? Number(value)
@@ -1473,33 +1658,33 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                         }
                                         target={
                                           column.id === "column-6"
-                                            ? target?.ppn
+                                            ? row["_effectiveTargets"]?.ppn
                                             : column.id === "column-7"
-                                            ? target?.ppn
+                                            ? row["_effectiveTargets"]?.ppn
                                             : column.id === "column-8"
-                                              ? target?.bundel
+                                              ? row["_effectiveTargets"]?.bundel
                                               : column.id === "column-9"
-                                                ? target?.tmb
+                                                ? row["_effectiveTargets"]?.tmb
                                                 : column.id === "column-12" // SB NBN
-                                                  ? target?.sbNbn
+                                                  ? row["_effectiveTargets"]?.sbNbn
                                                   : column.id === "column-13" // Belong NBN
-                                                  ? target?.tyro
+                                                  ? row["_effectiveTargets"]?.tyro
                                                   : column.id === "column-14" // Telstra Plus
-                                                    ? target?.websitebas
+                                                    ? row["_effectiveTargets"]?.websitebas
                                                     : column.id === "column-19"
-                                                      ? target?.dpc
+                                                      ? row["_effectiveTargets"]?.dpc
                                                       : column.id === "column-20"
-                                                        ? target?.AcceGP_Handset_Sales
+                                                        ? row["_effectiveTargets"]?.AcceGP_Handset_Sales
                                                         : column.id === "column-23"
-                                                          ? target?.gpGreenTarget
+                                                          ? row["_effectiveTargets"]?.gpGreenTarget
                                                           : null
                                         }
                                         isDpcColumn={column.id === "column-19"}
                                         isGPColumn={column.id === "column-23"}
                                         tierThresholds={column.id === "column-23" ? {
-                                          tier1: target?.gpGreenTarget || 12000,
-                                          tier2: target?.gpTier2Threshold || 14000,
-                                          tier3: target?.gpTier3Threshold || 16000
+                                          tier1: row["_effectiveTargets"]?.gpGreenTarget || 12000,
+                                          tier2: row["_effectiveTargets"]?.gpTier2Threshold || 14000,
+                                          tier3: row["_effectiveTargets"]?.gpTier3Threshold || 16000
                                         } : null}
                                         kpiTarget={KPITargets}
                                         isPPNCombined={column.id === "column-6" || column.id === "column-7"}
@@ -1513,12 +1698,32 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                         bundleNewData={
                                           column.id === "column-8" ? {
                                             bundleNewTotal: row["column-8"],
-                                            sbNbnValue: row["column-12"]
+                                            sbNbnValue: row["column-12"],
+                                            internetOnlyValue: data[rowIndex + (page * rowsPerPage)]?.["New Bundle/New Internet"] || 0
                                           } : null
                                         }
                                       />
-                                    </Box>
-                                  ) : column.id === "column-26" ? ( // Product Incentive - with tooltip
+                                      </Box>
+                                    </Tooltip>
+                                  ) : column.id === "column-0" ? ( // Salesrep name with Pro-Rata badge
+                                      <Box display="flex" flexDirection="column" alignItems="center" gap={0.5}>
+                                        <Typography variant="body2" fontWeight="medium">
+                                          {value}
+                                        </Typography>
+                                        {row["_isProrataStaff"] && (
+                                          <Chip
+                                            label="Pro-Rata"
+                                            size="small"
+                                            color="secondary"
+                                            sx={{
+                                              fontSize: '0.65rem',
+                                              height: '18px',
+                                              fontWeight: 'bold'
+                                            }}
+                                          />
+                                        )}
+                                      </Box>
+                                    ) : column.id === "column-26" ? ( // Product Incentive - with tooltip
                                       <Tooltip
                                         title={
                                           row["column-26-breakdown"] && row["column-26-breakdown"].length > 0 ? (
@@ -1568,7 +1773,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                       if (index === 15 || index === 7 || index === 12) {
                         return null;
                       }
-                      return (!hideColumns || index > 5 || index < 3) &&  
+                      return (!hideColumns || index > 5 || index < 3) &&
                         (!hideColumns ||
                           (
                             // index !== 7 &&
@@ -1596,8 +1801,77 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                             padding: "var(--space-sm) var(--space-md)",
                           }}
                         >
-                          {/* FIXED TOTALS DOLLAR FORMATTING for repositioned columns */}
-                          {index === 20 || // Accessory GP
+                          {/* PPN Total with Tooltip (column-6) */}
+                          {index === 6 ? (
+                            <Tooltip
+                              title={
+                                <Box sx={{ p: 0.5 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    PPN Total Breakdown
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    Consumer: {ppnTotals.consumer}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    Business (SB PPN): {ppnTotals.sbPPN}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{
+                                    borderTop: '1px solid #ddd',
+                                    pt: 0.5,
+                                    mt: 0.5,
+                                    fontWeight: 'bold'
+                                  }}>
+                                    Total: {ppnTotals.total}
+                                  </Typography>
+                                  {/* <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Store Target: {ppnTotals.accumulatedTarget} ({rows?.length || 0} staff × targets)
+                                  </Typography> */}
+                                </Box>
+                              }
+                              arrow
+                              placement="top"
+                            >
+                              <span style={{ cursor: 'help' }}>{total}</span>
+                            </Tooltip>
+                          ) :
+                          /* Bundle New Total with Tooltip (column-8) */
+                          index === 8 ? (
+                            <Tooltip
+                              title={
+                                <Box sx={{ p: 0.5 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    Bundle New Total Breakdown
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    Consumer: {bundleNewTotals.consumer}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    Business (SB NBN): {bundleNewTotals.sbNbn}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    Internet Only: {bundleNewTotals.internetOnly}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{
+                                    borderTop: '1px solid #ddd',
+                                    pt: 0.5,
+                                    mt: 0.5,
+                                    fontWeight: 'bold'
+                                  }}>
+                                    Total: {bundleNewTotals.total}
+                                  </Typography>
+                                  {/* <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    Store Target: {bundleNewTotals.accumulatedTarget} ({rows?.length || 0} staff × targets)
+                                  </Typography> */}
+                                </Box>
+                              }
+                              arrow
+                              placement="top"
+                            >
+                              <span style={{ cursor: 'help' }}>{total}</span>
+                            </Tooltip>
+                          ) :
+                          /* FIXED TOTALS DOLLAR FORMATTING for repositioned columns */
+                          index === 20 || // Accessory GP
                             index === 21 || // Acc GP
                             index === 22 || // Handset/Plan GP
                             index === 23 || // Total GP

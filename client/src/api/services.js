@@ -53,8 +53,7 @@ export const getTarget = async (salelocation , startDate, endDate) => {
 export const updateTarget = async (targetId, targetData) => {
   try {
     const response = await apiClient.patch(`${API_ROUTES.UPDATE_TARGET}/${targetId}`, targetData);
-    console.log(response)
-    // return response.data;
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -238,5 +237,97 @@ export const updateCommission = async (commissionData) => {
     return response.data;
   } catch (error) {
     throw error; // Handle the error as needed
+  }
+};
+
+// Pro-Rata Staff Services
+export const createProrataStaff = async (prorataStaffData) => {
+  try {
+    const response = await apiClient.post(API_ROUTES.CREATE_PRORATA_STAFF, prorataStaffData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getProrataStaff = async (salelocation, startDate, endDate) => {
+  try {
+    const response = await apiClient.get(`${API_ROUTES.GET_PRORATA_STAFF}?salelocation=${salelocation}&startDate=${startDate}&endDate=${endDate}`);
+    return response.data.prorataStaff;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateProrataStaff = async (staffId, prorataStaffData) => {
+  try {
+    const response = await apiClient.patch(`${API_ROUTES.UPDATE_PRORATA_STAFF}/${staffId}`, prorataStaffData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteProrataStaff = async (staffId) => {
+  try {
+    const response = await apiClient.delete(`${API_ROUTES.DELETE_PRORATA_STAFF}/${staffId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Staff Services
+export const syncStaffFromExternal = async (startDate, endDate) => {
+  try {
+    const response = await apiClient.get(`${API_ROUTES.SYNC_STAFF}?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAllStaff = async () => {
+  try {
+    const response = await apiClient.get(API_ROUTES.GET_ALL_STAFF);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getStaffByLocation = async (salelocation) => {
+  try {
+    const response = await apiClient.get(`${API_ROUTES.GET_STAFF_BY_LOCATION}?salelocation=${salelocation}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addStaff = async (staffData) => {
+  try {
+    const response = await apiClient.post(API_ROUTES.ADD_STAFF, staffData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateStaff = async (staffId, staffData) => {
+  try {
+    const response = await apiClient.patch(`${API_ROUTES.UPDATE_STAFF}/${staffId}`, staffData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteStaff = async (staffId) => {
+  try {
+    const response = await apiClient.delete(`${API_ROUTES.DELETE_STAFF}/${staffId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 };

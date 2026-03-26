@@ -38,27 +38,13 @@ export const getAll=async (req,res)=>{
      // Merge rows by salesrep
     const mergedData = filteredData.reduce((acc, current) => {
       const existingItem = acc.find(item => item.salesrep === current.salesrep);
-      // console.log(existingItem)
       if (existingItem) {
-        // Merge logic: sum numeric fields, concatenate strings, etc.
-        existingItem.SaleValue += current.SaleValue;
-        existingItem.SaleCount += current.SaleCount;
-        existingItem.accGP += current.accGP;
-        existingItem['Belong NBN'] += current['Belong NBN'];
-        existingItem.bundelnewcount += current.bundelnewcount;
-        existingItem.dcpcount += current.dcpcount;
-        existingItem.grossprofit += current.grossprofit;
-        existingItem.gpvalue += current.gpvalue;
-        existingItem.outriCount += current.outriCount;
-        existingItem.pnncount += current.pnncount;
-        existingItem.smartWatchCount += current.smartWatchCount;
-        existingItem['Stay Connected'] += current['Stay Connected'];
-        existingItem['Telstra Plus'] += current['Telstra Plus'];
-        existingItem.tmbcount += current.tmbcount;
-        existingItem.tyro += current.tyro;
-        existingItem.upgrade += current.upgrade;
-        existingItem['Upgrade & Protect Plus (Stay Connected)'] += current['Upgrade & Protect Plus (Stay Connected)'];
-        // Add more fields to merge as needed
+        // Dynamically merge all numeric fields so no product type is missed
+        Object.keys(current).forEach(key => {
+          if (typeof current[key] === 'number') {
+            existingItem[key] = (existingItem[key] || 0) + current[key];
+          }
+        });
       } else {
         acc.push({ ...current });
       }

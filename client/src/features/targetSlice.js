@@ -169,14 +169,9 @@ const targetSlice = createSlice({
       })
       .addCase(updateTargetThunk.fulfilled, (state, action) => {
         state.loading = false;
-        // const index = state.targets.findIndex(
-        //   (target) => target.id === action.payload.id
-        
-        // );
-        // if (index !== -1) {
-        //   state.targets[index] = action.payload;
-        // }
-        
+        if (action.payload?.Target) {
+          state.target = action.payload.Target;
+        }
       })
       .addCase(updateTargetThunk.rejected, (state, action) => {
         state.loading = false;
