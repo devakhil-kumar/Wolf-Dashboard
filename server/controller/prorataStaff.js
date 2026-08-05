@@ -102,12 +102,28 @@ export const getProrataStaff = async (req, res) => {
   };
 
   try {
-    const end = parseDate(endDate, true);
+    const filter = { salelocation: { $regex: new RegExp(salelocation, "i") } };
 
-    const prorataStaffList = await ProrataStaff.find({
-      salelocation: { $regex: new RegExp(salelocation, "i") },
-      createdDate: { $lte: end },
-    }).sort({ createdDate: -1 });
+    // Scope pro-rata to ONLY the month(s) the selected period covers.
+    // A pro-rata set for one month (e.g. annual leave) must NOT carry into
+    // later months — outside its month the staff falls back to the store target.
+    // We widen the range to whole months so fortnight views still catch a
+    // pro-rata that was created on any day of that month.
+    if (startDate && endDate) {
+      const start = parseDate(startDate);
+      const end = parseDate(endDate, true);
+      const startOfFirstMonth = new Date(
+        Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1, 0, 0, 0, 0)
+      );
+      const endOfLastMonth = new Date(
+        Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+      );
+      filter.createdDate = { $gte: startOfFirstMonth, $lte: endOfLastMonth };
+    }
+
+    const prorataStaffList = await ProrataStaff.find(filter).sort({
+      createdDate: -1,
+    });
 
     return res.status(200).json({ prorataStaff: prorataStaffList });
   } catch (error) {

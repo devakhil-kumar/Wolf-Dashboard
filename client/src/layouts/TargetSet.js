@@ -287,6 +287,7 @@ import {
   CardActions,
   Tabs,
   Tab,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -329,6 +330,7 @@ const SetTargetForm = () => {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [bonusValue, setBonusValue] = useState('');
   const [productBonuses, setProductBonuses] = useState([]);
+  const [hasUnsavedBonuses, setHasUnsavedBonuses] = useState(false);
 
   const [selectedLocation, setSelectedLocation] = useState('TRARALGON');
   const [selectedFortnight, setSelectedFortnight] = useState();
@@ -507,6 +509,7 @@ const SetTargetForm = () => {
         bonusValue: Number(bonusValue)
       };
       setProductBonuses(updatedBonuses);
+      setHasUnsavedBonuses(true);
       toast.success(`Updated bonus for ${selectedProduct}`);
     } else {
       // Add new bonus
@@ -515,6 +518,7 @@ const SetTargetForm = () => {
         bonusValue: Number(bonusValue)
       };
       setProductBonuses([...productBonuses, newBonus]);
+      setHasUnsavedBonuses(true);
       toast.success(`Added bonus for ${selectedProduct}`);
     }
 
@@ -529,6 +533,7 @@ const SetTargetForm = () => {
       bonus => bonus.product !== productToRemove
     );
     setProductBonuses(updatedBonuses);
+    setHasUnsavedBonuses(true);
     toast.success(`Removed bonus for ${productToRemove}`);
   };
 
@@ -603,15 +608,17 @@ const SetTargetForm = () => {
       
       if (result.meta.requestStatus === 'fulfilled') {
         toast.success('Target updated successfully!');
+        setHasUnsavedBonuses(false);
       } else {
         toast.error('Failed to update target. Please try again.');
       }
     } else {
       // Create new target
       const result = await dispatch(createTargetThunk(targetData));
-      
+
       if (result.meta.requestStatus === 'fulfilled') {
         toast.success('Target created successfully!');
+        setHasUnsavedBonuses(false);
       } else {
         toast.error('Failed to create target. Please try again.');
       }
@@ -884,6 +891,7 @@ const SetTargetForm = () => {
                 <MenuItem value="TRARALGON">TRARALGON</MenuItem>
                 <MenuItem value="WARRAGUL">WARRAGUL</MenuItem>
                 <MenuItem value="TORQUAY">TORQUAY</MenuItem>
+                <MenuItem value="HAMILTON">HAMILTON</MenuItem>
               </Select>
             </FormControl>
            
@@ -1086,8 +1094,13 @@ const SetTargetForm = () => {
               </Box>
             )}
 
+            {hasUnsavedBonuses && (
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                Unsaved changes — click <strong>Submit</strong> below to save your changes.
+              </Alert>
+            )}
             <Box mt={2}>
-              <Button type="submit" variant="contained" color="primary" disabled={isDemo}>
+              <Button type="submit" variant="contained" color={hasUnsavedBonuses ? 'warning' : 'primary'} disabled={isDemo}>
                 {isDemo ? 'Demo User - View Only' : 'Submit'}
               </Button>
             </Box>
@@ -1115,6 +1128,7 @@ const SetTargetForm = () => {
                   <MenuItem value="TRARALGON">TRARALGON</MenuItem>
                   <MenuItem value="WARRAGUL">WARRAGUL</MenuItem>
                   <MenuItem value="TORQUAY">TORQUAY</MenuItem>
+                  <MenuItem value="HAMILTON">HAMILTON</MenuItem>
                 </Select>
               </FormControl>
             </Paper>

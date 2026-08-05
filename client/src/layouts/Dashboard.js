@@ -354,7 +354,17 @@ const READ_ONLY_EMAILS = [
   useEffect(() => {
     fetchData();
   }, [fromDate, toDate]);
-  
+
+  // Auto-refresh every 15 minutes; pauses when tab is hidden to save resources
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    }, 15 * 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [fromDate, toDate, selectedTab.value]);
+
   useEffect(() => {
     setMutableData(data?.map((item) => ({ ...item }))); // Create a mutable copy of data
   }, [data]);
@@ -585,7 +595,7 @@ const READ_ONLY_EMAILS = [
     format: (value) => value,
   }));
 
-  const tabs = ["All Stores", "Traralgon", "Warragul", "Torquay"];
+  const tabs = ["All Stores", "Traralgon", "Warragul", "Torquay", "Hamilton"];
 
   // Helper functions for Pro-Rata Staff
   const isProrataStaff = (salesrepName) => {
@@ -727,7 +737,7 @@ const READ_ONLY_EMAILS = [
     }
 
     // New Bundles KPI
-    if (item.bundelnewcount >= (effectiveTargets?.bundel !== null ? effectiveTargets?.bundel : 0)) {
+    if (((item.bundelnewcount || 0) + (item["New Bundle/New Internet"] || 0)) >= (effectiveTargets?.bundel !== null ? effectiveTargets?.bundel : 0)) {
       kpiScore += KPITargets.KPIBundle !== null ? KPITargets.KPIBundle : 0;
       // console.log(kpiScore,"kpiScore")
     }
@@ -807,28 +817,21 @@ else if (kpiScore >= KPITargets.KPIMAIN) {
   const NPSVol = rowData["column-1"];
   const NPSScore = rowData["column-2"];
   
-  let npsMultiplier = 1.0;
+  // Penalty (halving) depends ONLY on the score, never on survey volume.
+  // Volume only gates the upward 1.5x bonus.
+  let npsMultiplier = KPITargets.NPSMultiplierMid; // 1.0x — no adjustment by default
 
-  if (NPSVol >= KPITargets.NPSVoltarget && NPSScore >= KPITargets.NPSScoreTargetMax) {
-    // High volume (≥ 10 surveys) and high score (NPS ≥ 75)
-    npsMultiplier = KPITargets.NPSMultiplierHigh; // 1.5x
+  if (NPSScore < KPITargets.NPSScoreTargetMin) {
+    // Score below the minimum (e.g. < 61) → halve, regardless of volume
+    npsMultiplier = KPITargets.NPSMultiplierLow; // 0.5x
   } else if (
     NPSVol >= KPITargets.NPSVoltarget &&
-    NPSScore >= KPITargets.NPSScoreTargetMin && 
-    NPSScore < KPITargets.NPSScoreTargetMax
-  ) {
-    // High volume (≥ 10 surveys) and medium score (e.g., 50 ≤ NPS < 75)
-    npsMultiplier = KPITargets.NPSMultiplierMid; // 1.0x
-  } else if (
-    NPSVol < KPITargets.NPSVoltarget &&
     NPSScore >= KPITargets.NPSScoreTargetMax
   ) {
-    // Low volume (< 10 surveys) but high score (NPS ≥ 75)
-    npsMultiplier = KPITargets.NPSMultiplierMid; // 1.0x
-  } else {
-    // All other cases (e.g., high volume with NPS < min, or low volume with NPS < 75)
-    npsMultiplier = KPITargets.NPSMultiplierLow; // 1.0x
+    // High volume (≥ target) AND high score (≥ max) → bonus
+    npsMultiplier = KPITargets.NPSMultiplierHigh; // 1.5x
   }
+  // Score in [min, max) → stays at 1.0x (no deduction), whatever the volume
 
   // console.log("kpiAdjustedCommission", kpiAdjustedCommission);
   // console.log("npsMultiplier", npsMultiplier);
@@ -924,7 +927,8 @@ if (effectiveTargets?.productBonuses && effectiveTargets.productBonuses.length >
         break;
       case 'Internet NEW':
       case 'Internet Only':
-        productSales = item["New Bundle/New Internet"] || 0;
+        // Subtract SB NBN to avoid double counting (bundelnewcount includes SB NBN)
+        productSales = (item.bundelnewcount || 0) + (item["New Bundle/New Internet"] || 0) - (item["SB NBN"] || 0);
         break;
       case 'MBB':
         productSales = item["TMB-NEW (5)"] || 0;

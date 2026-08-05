@@ -91,10 +91,19 @@ export const getNPS = async (req, res) => {
 export const getAllNPS = async (req, res) => {
   const { startDate, endDate } = req.query;
 
-  const parseDate = (dateStr) => {
+  // Parse DD/MM/YY(YY) in UTC. The end date must cover the WHOLE day, otherwise
+  // NPS entered on the final day of the range is excluded from the totals
+  // (which silently lowers NPS volume/score and the commission multiplier).
+  const parseDate = (dateStr, endOfDay = false) => {
     const [day, month, year] = dateStr.trim().split("/");
-    const fullYear = year.length === 2 ? `20${year}` : year; // Convert two-digit year to four-digit year if necessary
-    return new Date(`${fullYear}-${month}-${day}`);
+    const fullYear = year.length === 2 ? `20${year}` : year;
+    const d = new Date(Date.UTC(+fullYear, +month - 1, +day));
+    if (endOfDay) {
+      d.setUTCHours(23, 59, 59, 999);
+    } else {
+      d.setUTCHours(0, 0, 0, 0);
+    }
+    return d;
   };
 
   let dateFilter = {};
@@ -103,7 +112,7 @@ export const getAllNPS = async (req, res) => {
     dateFilter = {
       createdDate: {
         $gte: parseDate(startDate),
-        $lte: parseDate(endDate),
+        $lte: parseDate(endDate, true),
       },
     };
   } else {

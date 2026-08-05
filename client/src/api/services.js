@@ -1,6 +1,40 @@
 import apiClient from './api';
 import { API_ROUTES } from './constants';
 
+// ===== Reports module services =====
+export const getGpComparison = async (salelocation, startDate, endDate) => {
+  try {
+    const response = await apiClient.get(API_ROUTES.REPORT_GP_COMPARISON, {
+      params: { salelocation, startDate, endDate },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getGpTrend = async (salelocation, year, compare = true) => {
+  try {
+    const response = await apiClient.get(API_ROUTES.REPORT_GP_TREND, {
+      params: { salelocation, year, compare },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getStoreOverview = async (startDate, endDate) => {
+  try {
+    const response = await apiClient.get(API_ROUTES.REPORT_STORE_OVERVIEW, {
+      params: { startDate, endDate },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const fetchData = async (salelocation,startDate, endDate) => {
   try {
     const response = await apiClient.get(API_ROUTES.FETCH_DATA, {
@@ -44,6 +78,17 @@ export const getTarget = async (salelocation , startDate, endDate) => {
     const response = await apiClient.get(`${API_ROUTES.GET_TARGET}?salelocation=${salelocation}&startDate=${startDate}&endDate=${endDate}`);
     console.log(response.data.target,"kk")
     return response.data.target;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// All target records (full history, every store) — used to resolve the
+// effective target for each month on the Target/KPI board.
+export const getAllTargets = async () => {
+  try {
+    const response = await apiClient.get(API_ROUTES.GET_TARGETS_ALL);
+    return response.data.targets || [];
   } catch (error) {
     throw error;
   }

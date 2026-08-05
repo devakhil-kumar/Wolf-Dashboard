@@ -2,9 +2,22 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   createTarget,
   getTarget,
+  getAllTargets,
   updateTarget,
   deleteTarget,
 } from '../api/services';
+
+// Fetch every target record (all stores, full history) into state.targets.targets.
+export const getAllTargetsThunk = createAsyncThunk(
+  'targets/getAllTargets',
+  async (_, thunkAPI) => {
+    try {
+      return await getAllTargets();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error?.response?.data);
+    }
+  }
+);
 
 // Async thunks
 export const createTargetThunk = createAsyncThunk(
@@ -162,6 +175,9 @@ const targetSlice = createSlice({
       .addCase(getTargetThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload.message;
+      })
+      .addCase(getAllTargetsThunk.fulfilled, (state, action) => {
+        state.targets = action.payload || [];
       })
       .addCase(updateTargetThunk.pending, (state) => {
         state.loading = true;

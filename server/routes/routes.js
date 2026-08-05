@@ -8,6 +8,7 @@ import { createCommission,updateCommission,getCommission } from "../controller/c
 import { getKPIs, getKPI, createKPI, updateKPI, updateAllKPI, deleteKPI } from '../controller/KPIController.js';
 import { createProrataStaff, deleteProrataStaff, getProrataStaff, getAllProrataStaff, updateProrataStaff } from '../controller/prorataStaff.js';
 import { syncStaffFromExternal, getStaffByLocation, getAllStaff, addStaff, updateStaff, deleteStaff } from '../controller/staff.js';
+import { getGpComparison, getGpTrend, getStoreOverview } from '../controller/reports.js';
 
 const router= express.Router();
 // authentication routes ====================>
@@ -84,6 +85,11 @@ router.delete("/kpi/:id", deleteKPI);
     router.post("/prorata-staff", createProrataStaff);
     router.patch("/prorata-staff/:id", updateProrataStaff);
     router.delete("/prorata-staff/:id", deleteProrataStaff);
+
+    // Reports routes ====================>
+    router.get("/reports/gp-comparison", getGpComparison);  // GP Year-on-Year (current vs same period last year)
+    router.get("/reports/gp-trend", getGpTrend);            // Monthly GP trend (optionally vs previous year)
+    router.get("/reports/store-overview", getStoreOverview); // Multi-site benchmark / overview
 
     // Staff routes ====================>
     router.get("/staff/sync", syncStaffFromExternal);  // Sync staff from external API

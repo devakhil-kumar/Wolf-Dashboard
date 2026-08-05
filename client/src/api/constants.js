@@ -4,6 +4,7 @@ export const API_ROUTES = {
     GET_ALL:'get-all',
     CREATE_TARGET: '/target',
   GET_TARGET: 'target',
+  GET_TARGETS_ALL: 'target/all',
   UPDATE_TARGET: '/target',
   DELETE_TARGET: '/delete-target',
   CREATE_ADMIN: '/admin',
@@ -28,5 +29,9 @@ export const API_ROUTES = {
   ADD_STAFF:'/staff',
   UPDATE_STAFF:'/staff',
   DELETE_STAFF:'/staff',
+  // Reports module
+  REPORT_GP_COMPARISON:'/reports/gp-comparison',
+  REPORT_GP_TREND:'/reports/gp-trend',
+  REPORT_STORE_OVERVIEW:'/reports/store-overview',
     // Add more routes here as needed
   };

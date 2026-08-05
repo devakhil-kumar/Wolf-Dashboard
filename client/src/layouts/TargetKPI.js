@@ -43,7 +43,7 @@ const TargetKPI = () => {
     GPCommissionPercentage: '4',
     GPTier2Percentage: '5.5',
     GPTier3Percentage: '7',
-    NPSMultiplierLow: '0.5',      // New: For score below target OR volume below target
+    NPSMultiplierLow: '0.5',      // Applied only when score is below the min target (volume is not a factor)
     NPSMultiplierMid: '1.0',      // New: For score at/above target but volume below target
     NPSMultiplierHigh: '1.5'      // New: For both score and volume at/above targets
   };
@@ -274,6 +274,7 @@ const TargetKPI = () => {
                 <MenuItem value="TRARALGON">TRARALGON</MenuItem>
                 <MenuItem value="WARRAGUL">WARRAGUL</MenuItem>
                 <MenuItem value="TORQUAY">TORQUAY</MenuItem>
+                <MenuItem value="HAMILTON">HAMILTON</MenuItem>
               </Select>
             </FormControl>
 

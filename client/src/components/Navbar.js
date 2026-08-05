@@ -358,6 +358,7 @@ const Navbar = () => {
 
   const menuItems = [
     { name: 'DASHBOARD', path: '/dashboard', enabled: true },
+    { name: 'REPORTS', path: '/reports', enabled: isCreateUserAllowed },
     { name: 'SET TARGET', path: '/settarget', enabled: isCreateUserAllowed },
     { name: 'SET KPI%', path: '/setkpi', enabled: isCreateUserAllowed },
     { name: 'CREATE USER', path: '/signup', enabled: isCreateUserAllowed }

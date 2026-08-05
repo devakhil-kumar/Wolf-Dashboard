@@ -6,7 +6,8 @@ import adminReducer from '../features/adminSlice';
 import authReducer from '../features/authSlice';
 import npsReducer from '../features/npsSlice';
 import commissionReducer from '../features/commissionSlice';
-import prorataStaffReducer from '../features/prorataStaffSlice'; 
+import prorataStaffReducer from '../features/prorataStaffSlice';
+import reportsReducer from '../features/reportsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,6 @@ export const store = configureStore({
     nps: npsReducer,
     commission: commissionReducer,
     prorataStaff: prorataStaffReducer,
+    reports: reportsReducer,
   },
 })
