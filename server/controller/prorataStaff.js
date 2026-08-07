@@ -104,21 +104,19 @@ export const getProrataStaff = async (req, res) => {
   try {
     const filter = { salelocation: { $regex: new RegExp(salelocation, "i") } };
 
-    // Scope pro-rata to ONLY the month(s) the selected period covers.
-    // A pro-rata set for one month (e.g. annual leave) must NOT carry into
-    // later months — outside its month the staff falls back to the store target.
-    // We widen the range to whole months so fortnight views still catch a
-    // pro-rata that was created on any day of that month.
+    // A pro-rata entry stays in force from the month it's created onward,
+    // until a newer entry for the same staff member replaces it — same rule
+    // used for store-level targets (see effectiveTargetForMonth in
+    // client/src/utils/commissionCalc.js). We only cap at the end of the
+    // viewed period so future-dated entries don't leak backwards; the client
+    // sorts by createdDate desc and picks the latest match per salesrep, so
+    // an older entry keeps applying to any month that hasn't had a newer one set.
     if (startDate && endDate) {
-      const start = parseDate(startDate);
       const end = parseDate(endDate, true);
-      const startOfFirstMonth = new Date(
-        Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1, 0, 0, 0, 0)
-      );
       const endOfLastMonth = new Date(
         Date.UTC(end.getUTCFullYear(), end.getUTCMonth() + 1, 0, 23, 59, 59, 999)
       );
-      filter.createdDate = { $gte: startOfFirstMonth, $lte: endOfLastMonth };
+      filter.createdDate = { $lte: endOfLastMonth };
     }
 
     const prorataStaffList = await ProrataStaff.find(filter).sort({
