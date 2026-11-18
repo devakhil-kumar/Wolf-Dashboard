@@ -311,7 +311,7 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../features/authSlice';
@@ -323,7 +323,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
-  const { isCreateUserAllowed } = useSelector((state) => state.auth);
+  const { isCreateUserAllowed, isReportsAllowed } = useSelector((state) => state.auth);
 
   // Handle window resize
   useEffect(() => {
@@ -358,11 +358,94 @@ const Navbar = () => {
 
   const menuItems = [
     { name: 'DASHBOARD', path: '/dashboard', enabled: true },
-    { name: 'REPORTS', path: '/reports', enabled: isCreateUserAllowed },
+    { name: 'REPORTS', path: '/reports', enabled: isReportsAllowed },
     { name: 'SET TARGET', path: '/settarget', enabled: isCreateUserAllowed },
     { name: 'SET KPI%', path: '/setkpi', enabled: isCreateUserAllowed },
     { name: 'CREATE USER', path: '/signup', enabled: isCreateUserAllowed }
   ];
+
+  // How many menu items fit to the left of the (centred) logo. Anything that
+  // doesn't fit moves into the MORE dropdown instead of running under the logo.
+  const [visibleCount, setVisibleCount] = useState(menuItems.length);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [moreRect, setMoreRect] = useState(null);
+  const menuRef = useRef(null);
+  const logoRef = useRef(null);
+  const measureRef = useRef(null);
+  const moreMeasureRef = useRef(null);
+  const moreBtnRef = useRef(null);
+  const moreMenuRef = useRef(null);
+
+  useEffect(() => {
+    const menu = menuRef.current;
+    const logoEl = logoRef.current;
+    const measure = measureRef.current;
+    if (!menu || !logoEl || !measure || typeof ResizeObserver === 'undefined') return undefined;
+
+    const recalc = () => {
+      // Widths are read from the hidden copy, which always renders every item.
+      // Measuring the visible menu instead would oscillate: moving items into
+      // MORE would free space, which would immediately pull them back out.
+      const widths = Array.from(measure.children).map(
+        (el) => el.getBoundingClientRect().width + 8 // + space-x-1 gap
+      );
+      const moreWidth = (moreMeasureRef.current?.getBoundingClientRect().width ?? 0) + 8;
+
+      // The logo is absolutely centred, so the menu's usable space is simply
+      // whatever sits to its left.
+      const available =
+        logoEl.getBoundingClientRect().left - menu.getBoundingClientRect().left - 16;
+
+      const total = widths.reduce((sum, w) => sum + w, 0);
+      if (total <= available) {
+        setVisibleCount(widths.length);
+        return;
+      }
+
+      let used = 0;
+      let count = 0;
+      for (let i = 0; i < widths.length; i += 1) {
+        if (used + widths[i] + moreWidth > available) break;
+        used += widths[i];
+        count += 1;
+      }
+      setVisibleCount(count);
+    };
+
+    recalc();
+
+    const observer = new ResizeObserver(recalc);
+    observer.observe(document.body);
+    observer.observe(measure);
+    return () => observer.disconnect();
+  }, [menuItems.length]);
+
+  // The dropdown is position:fixed (the navbar clips its own overflow), so its
+  // coordinates go stale if the page moves underneath it.
+  useEffect(() => {
+    if (!isMoreOpen) return undefined;
+
+    const close = () => setIsMoreOpen(false);
+    const onClickAway = (e) => {
+      // The panel must be excluded too — closing on mousedown would unmount the
+      // link before its click event fired, so nothing would ever navigate.
+      if (
+        !moreBtnRef.current?.contains(e.target) &&
+        !moreMenuRef.current?.contains(e.target)
+      ) {
+        close();
+      }
+    };
+
+    document.addEventListener('mousedown', onClickAway);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    return () => {
+      document.removeEventListener('mousedown', onClickAway);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [isMoreOpen]);
 
   const handleLogout = () => {
     dispatch(logoutUser());
@@ -417,15 +500,35 @@ const Navbar = () => {
         style={{ backgroundColor: colors.primary, height: isDesktop ? '70px' : 'auto' }}
       >
         <div className="max-w-9xl mx-auto flex items-center justify-between md:h-full"> 
+          {/* Hidden copies used only for width measurement — never visible. */}
+          <div
+            aria-hidden="true"
+            className="absolute top-0 left-0 invisible pointer-events-none whitespace-nowrap"
+          >
+            <div ref={measureRef} className="flex items-center space-x-1">
+              {menuItems.map((item, index) => (
+                <span key={item.name} className="flex items-center space-x-1">
+                  <span className="px-4 py-2 text-white font-medium">{item.name}</span>
+                  {index < menuItems.length - 1 && (
+                    <span className="text-gray-400 text-sm">|</span>
+                  )}
+                </span>
+              ))}
+            </div>
+            <span ref={moreMeasureRef} className="px-4 py-2 text-white font-medium">
+              MORE ▾
+            </span>
+          </div>
+
           {/* Desktop Menu Items - Left Side */}
-          <div className="hidden md:flex items-center space-x-1">
-            {menuItems.map((item, index) => (
+          <div ref={menuRef} className="hidden md:flex items-center space-x-1">
+            {menuItems.slice(0, visibleCount).map((item, index) => (
               <React.Fragment key={item.name}>
                 {item.enabled ? (
                   <Link
                     to={item.path}
                     className={`px-4 py-2 text-white font-medium transition-all duration-200 hover:bg-opacity-80 cursor-pointer hover:text-opacity-90`}
-                    style={{ 
+                    style={{
                       backgroundColor: 'transparent',
                     }}
                     onMouseEnter={(e) => {
@@ -444,12 +547,67 @@ const Navbar = () => {
                     {item.name}
                   </span>
                 )}
-                {index < menuItems.length - 1 && (
+                {(index < visibleCount - 1 || visibleCount < menuItems.length) && (
                   <span className="text-gray-400 text-sm">|</span>
                 )}
               </React.Fragment>
             ))}
+
+            {visibleCount < menuItems.length && (
+              <button
+                ref={moreBtnRef}
+                onClick={() => {
+                  const rect = moreBtnRef.current?.getBoundingClientRect();
+                  setMoreRect(rect ? { top: rect.bottom, left: rect.left } : null);
+                  setIsMoreOpen((open) => !open);
+                }}
+                className="px-4 py-2 text-white font-medium whitespace-nowrap transition-all duration-200 hover:bg-opacity-80 cursor-pointer"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.primaryLight;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                MORE ▾
+              </button>
+            )}
           </div>
+
+          {/* MORE dropdown. Fixed-positioned because the navbar clips its own
+              overflow, which would otherwise cut the panel off. */}
+          {isMoreOpen && moreRect && (
+            <div
+              ref={moreMenuRef}
+              className="fixed py-1 rounded shadow-lg z-50 min-w-[180px]"
+              style={{
+                top: moreRect.top + 4,
+                left: moreRect.left,
+                backgroundColor: colors.primary,
+                border: `1px solid ${colors.border}`,
+              }}
+            >
+              {menuItems.slice(visibleCount).map((item) => (
+                item.enabled ? (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    onClick={() => setIsMoreOpen(false)}
+                    className="block px-4 py-2 text-white font-medium whitespace-nowrap transition-colors hover:bg-white hover:bg-opacity-10"
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <span
+                    key={item.name}
+                    className="block px-4 py-2 text-white font-medium whitespace-nowrap opacity-50 cursor-not-allowed"
+                  >
+                    {item.name}
+                  </span>
+                )
+              ))}
+            </div>
+          )}
 
           {/* Mobile Menu Button - Left Side on Mobile */}
           <div className="md:hidden flex items-center">
@@ -472,7 +630,7 @@ const Navbar = () => {
           </div>
 
           {/* Logo - Center */}
-          <div className="absolute left-1/2 transform -translate-x-1/2">
+          <div ref={logoRef} className="absolute left-1/2 transform -translate-x-1/2">
             <img src={logo} alt="Alpha Metric Logo" className="h-12 md:h-16" />
           </div>
 

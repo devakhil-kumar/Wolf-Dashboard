@@ -339,7 +339,11 @@ export function computeStaffRow(item, ctx) {
       let sales = 0;
       switch (bonus.product) {
         case 'PPN':
-          sales = (item.pnncount || 0) + (item['mob-new'] || 0);
+          // pnncount is the TOTAL PPN count from ClickPos — SB PPN sales are
+          // already inside it. Subtract them so a business sale earns the SB PPN
+          // bonus only, not both. Mirrors the consumer split the PPN column
+          // tooltip uses (totalPPN - totalSbPPN).
+          sales = (item.pnncount || 0) - (item['SB PPN'] || 0);
           break;
         case 'SB PPN':
           sales = item['SB PPN'] || 0;
@@ -485,6 +489,11 @@ export function computeStaffRow(item, ctx) {
     kpiThresholdMet: kpiScore >= mainKpi,
     npsVol: nps.npsVol,
     npsScore: nps.npsScore,
+    // aggregateNps already works these out to derive the score — surface them
+    // so the board can show the survey mix, not just the headline number.
+    npsAdvocates: nps.adv10_9,
+    npsPassives: nps.pass8_7,
+    npsDetractors: nps.detr_less_6,
     commission,
     commissionNumeric: eligible ? commission : 0,
     potentialCommission,

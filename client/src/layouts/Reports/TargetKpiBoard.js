@@ -31,7 +31,7 @@ import {
 import { exportNodeToPdf } from '../../utils/exportPdf';
 import MonthMultiSelect, { currentMonthValue } from '../../components/reports/MonthMultiSelect';
 
-const STORES = ['Traralgon', 'Warragul', 'Torquay', 'Hamilton', 'All Stores'];
+const STORES = ['Hamilton', 'Torquay', 'Traralgon', 'Warragul', 'All Stores'];
 
 const money = (n) =>
   '$' + Number(n || 0).toLocaleString('en-AU', { maximumFractionDigits: 0 });
@@ -171,12 +171,20 @@ export default function TargetKpiBoard() {
   })) || [];
 
   const totals = useMemo(() => {
-    const t = { totalGP: 0, commission: 0, potential: 0, productIncentive: 0 };
+    const t = {
+      totalGP: 0, commission: 0, potential: 0, productIncentive: 0,
+      surveys: 0, advocates: 0, passives: 0, detractors: 0,
+    };
     rows.forEach((r) => {
       t.totalGP += r.totalGP;
       t.commission += r.commissionNumeric;
       t.productIncentive += r.productIncentive;
       if (typeof r.potentialCommission === 'number') t.potential += r.potentialCommission;
+      // NPS counts come through as '' for staff with no surveys in the period.
+      t.surveys += Number(r.npsVol) || 0;
+      t.advocates += Number(r.npsAdvocates) || 0;
+      t.passives += Number(r.npsPassives) || 0;
+      t.detractors += Number(r.npsDetractors) || 0;
     });
     return t;
   }, [rows]);
@@ -243,7 +251,8 @@ export default function TargetKpiBoard() {
                 <TableHead>
                   <TableRow sx={{ backgroundColor: '#2C3E50' }}>
                     {['Staff', 'Bonus', 'Total GP', 'Potential Bonus', 'Product Inc.',
-                      '% Achieved', 'NPS Score'].map((h) => (
+                      '% Achieved', 'NPS Score', 'Surveys', 'Advocates', 'Passives',
+                      'Detractors'].map((h) => (
                       <TableCell key={h} sx={{ color: '#fff', fontWeight: 700 }}>{h}</TableCell>
                     ))}
                     {kpiCols.map((c) => (
@@ -285,6 +294,18 @@ export default function TargetKpiBoard() {
                       <TableCell sx={{ textAlign: 'center' }}>
                         {r.npsScore === '' ? '—' : r.npsScore}
                       </TableCell>
+                      <TableCell sx={{ textAlign: 'center', fontWeight: 600 }}>
+                        {r.npsVol === '' ? '—' : r.npsVol}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: 'center', color: '#00B894' }}>
+                        {r.npsAdvocates === '' ? '—' : r.npsAdvocates}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: 'center', color: '#7F8C8D' }}>
+                        {r.npsPassives === '' ? '—' : r.npsPassives}
+                      </TableCell>
+                      <TableCell sx={{ textAlign: 'center', color: '#FF4444' }}>
+                        {r.npsDetractors === '' ? '—' : r.npsDetractors}
+                      </TableCell>
                       {r.kpiBreakdown.map((k) => (
                         <TableCell key={k.key} align="center" sx={{
                           fontWeight: 600,
@@ -303,7 +324,13 @@ export default function TargetKpiBoard() {
                     <TableCell sx={{ fontWeight: 800 }}>{money(totals.totalGP)}</TableCell>
                     <TableCell sx={{ fontWeight: 800, color: '#7F8C8D' }}>{money(totals.potential)}</TableCell>
                     <TableCell sx={{ fontWeight: 800 }}>{money(totals.productIncentive)}</TableCell>
-                    <TableCell colSpan={2 + kpiCols.length} />
+                    {/* % Achieved and NPS Score are averages, not sums — left blank */}
+                    <TableCell colSpan={2} />
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center' }}>{totals.surveys}</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center', color: '#00B894' }}>{totals.advocates}</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center', color: '#7F8C8D' }}>{totals.passives}</TableCell>
+                    <TableCell sx={{ fontWeight: 800, textAlign: 'center', color: '#FF4444' }}>{totals.detractors}</TableCell>
+                    <TableCell colSpan={kpiCols.length} />
                   </TableRow>
                 </TableBody>
               </Table>

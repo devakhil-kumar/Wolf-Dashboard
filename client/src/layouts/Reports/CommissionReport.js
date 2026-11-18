@@ -37,7 +37,7 @@ import { buildKpiTargets, computeStaffRow } from '../../utils/commissionCalc';
 import { exportNodeToPdf } from '../../utils/exportPdf';
 import MonthMultiSelect, { currentMonthValue } from '../../components/reports/MonthMultiSelect';
 
-const STORES = ['Traralgon', 'Warragul', 'Torquay', 'Hamilton', 'All Stores'];
+const STORES = ['Hamilton', 'Torquay', 'Traralgon', 'Warragul', 'All Stores'];
 
 const money = (n) =>
   '$' + Number(n || 0).toLocaleString('en-AU', { maximumFractionDigits: 0 });

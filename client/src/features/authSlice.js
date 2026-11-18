@@ -257,12 +257,6 @@ const ALLOWED_EMAILS = [
 // Helper function to check if email is allowed
 const isEmailAllowed = (email) => ALLOWED_EMAILS.includes(email);
 
-// Helper function to determine if email should have admin privileges (for backward compatibility)
-const isEmailAdmin = (email) => ALLOWED_EMAILS.includes(email) && email !== 'demo@wolfstores.com.au';
-
-// Helper function to check if user is demo user
-const isDemoUser = (email) => email === 'demo@wolfstores.com.au';
-
 // Helper function to get user from localStorage
 const getUserFromStorage = () => {
   try {
@@ -288,6 +282,37 @@ const removeUserFromStorage = () => {
   localStorage.removeItem('user');
 };
 
+// Read the role claim out of the JWT. The token is signed by the server and has
+// carried `role` since the first release, so it is the only trustworthy source
+// of the role on the client. The cached `user` object is NOT trustworthy: an
+// earlier build wrote role: 'admin' into localStorage for any email listed in
+// ALLOWED_EMAILS, and those stale values are still sitting in store browsers.
+const decodeTokenRole = (token) => {
+  try {
+    const payload = token?.split('.')[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(json).role || null;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Every logged-in session has a token, so its role claim wins outright — we
+// never fall back to the cached user object while a token exists, otherwise a
+// stale client-side 'admin' would keep granting access.
+const resolveRole = () => {
+  const token = localStorage.getItem('token');
+  if (token) return decodeTokenRole(token);
+  return getUserFromStorage()?.role || null;
+};
+
+// Roles allowed into the Reports module. Store logins are 'staff' and are
+// deliberately excluded; 'demo' keeps access for client demonstrations.
+const REPORTS_ROLES = ['admin', 'manager', 'demo'];
+
+const getReportsPermission = (role) => REPORTS_ROLES.includes(role);
+
 // Helper function to determine create user permissions based on role
 const getCreateUserPermissions = (role, email) => {
   if (role === 'admin') return true;
@@ -307,15 +332,8 @@ export const loginUser = createAsyncThunk('auth/loginUser', async ({ email, pass
     localStorage.setItem('userEmail', response.admin.email);
     localStorage.setItem('token', response.token);
     
-    // If user doesn't have a role but email is in allowed list, set appropriate role (backward compatibility)
-    if (!response.admin.role) {
-      if (isDemoUser(response.admin.email)) {
-        response.admin.role = 'demo';
-      } else if (isEmailAdmin(response.admin.email)) {
-        response.admin.role = 'admin';
-      }
-    }
-    
+    // The role always comes from the server now — every account carries an
+    // explicit role in the DB. Never infer or upgrade it on the client.
     saveUserToStorage(response.admin);
     
     return response;
@@ -327,43 +345,31 @@ export const loginUser = createAsyncThunk('auth/loginUser', async ({ email, pass
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: (() => {
-      const storedUser = getUserFromStorage();
-      // Ensure backward compatibility - if user has no role but email is allowed, set appropriate role
-      if (storedUser && !storedUser.role) {
-        if (isDemoUser(storedUser.email)) {
-          storedUser.role = 'demo';
-          saveUserToStorage(storedUser);
-        } else if (isEmailAdmin(storedUser.email)) {
-          storedUser.role = 'admin';
-          saveUserToStorage(storedUser);
-        }
-      }
-      return storedUser;
-    })(),
+    user: getUserFromStorage(),
     token: localStorage.getItem('token') || null,
     status: 'idle',
     error: null,
     // Check permissions based on role and email
     isCreateUserAllowed: (() => {
-      const storedUser = getUserFromStorage();
-      const storedEmail = localStorage.getItem('userEmail');
-      
-      // If we have a stored user with role, use that
-      if (storedUser && storedUser.role) {
-        return getCreateUserPermissions(storedUser.role, storedUser.email);
+      const role = resolveRole();
+      if (role) {
+        return getCreateUserPermissions(role, getUserFromStorage()?.email);
       }
-      
+
       // Fallback to email-based check for backward compatibility
-      return isEmailAllowed(storedEmail);
+      return isEmailAllowed(localStorage.getItem('userEmail'));
     })(),
+    // Reports is gated on the role alone — no email fallback, so a store login
+    // can never inherit access from a stale cached user object.
+    isReportsAllowed: getReportsPermission(resolveRole()),
   },
   reducers: {
     logoutUser: (state) => {
       state.user = null;
       state.token = null;
       state.isCreateUserAllowed = false;
-      
+      state.isReportsAllowed = false;
+
       // Clear all stored data
       localStorage.removeItem('token');
       localStorage.removeItem('userEmail');
@@ -378,6 +384,7 @@ const authSlice = createSlice({
       // Update permissions based on new role
       if (state.user.role) {
         state.isCreateUserAllowed = getCreateUserPermissions(state.user.role, state.user.email);
+        state.isReportsAllowed = getReportsPermission(state.user.role);
       }
     },
     
@@ -392,6 +399,7 @@ const authSlice = createSlice({
         state.user.role = action.payload;
         saveUserToStorage(state.user);
         state.isCreateUserAllowed = getCreateUserPermissions(state.user.role, state.user.email);
+        state.isReportsAllowed = getReportsPermission(state.user.role);
       }
     },
   },
@@ -407,17 +415,15 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.error = null;
         
-        // Set permissions based on user role
-        if (action.payload.admin.role) {
-          state.isCreateUserAllowed = getCreateUserPermissions(
-            action.payload.admin.role, 
-            action.payload.admin.email
-          );
+        // Set permissions from the role the server just returned
+        const { role, email } = action.payload.admin;
+        if (role) {
+          state.isCreateUserAllowed = getCreateUserPermissions(role, email);
         } else {
           // Fallback to email-based check if role is not available
-          const storedEmail = localStorage.getItem('userEmail');
-          state.isCreateUserAllowed = isEmailAllowed(storedEmail);
+          state.isCreateUserAllowed = isEmailAllowed(localStorage.getItem('userEmail'));
         }
+        state.isReportsAllowed = getReportsPermission(role);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.status = 'failed';
@@ -425,6 +431,7 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isCreateUserAllowed = false;
+        state.isReportsAllowed = false;
         
         // Clear stored data on login failure
         localStorage.removeItem('token');

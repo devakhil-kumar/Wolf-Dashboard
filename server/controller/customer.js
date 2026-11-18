@@ -3,6 +3,14 @@ import { handleGet, handleGetAll } from "../utils/crudHelpers/Get.js";
 import { handleGroupByAggregate } from "../utils/crudHelpers/groupByAggregate.js";
 import { buildAggregationOperations, changeFormatDateForFetchingData, formatDate } from "../utils/index.js";
 import { aggregateSalesDataByStaff} from "../utils/modifyApiData.js";
+import { correctSalesCategories } from "../utils/salesCategories.js";
+// ClickPos merges the result sets of overlapping requests that share a token:
+// four concurrent calls for 01-18 Nov each came back with ~4x the rows, and
+// Lisa Mackrell's Gross Profit read 25,324 instead of 6,331. The dashboard
+// fetches one range per store tab, so those calls overlap routinely and
+// inflated GP straight into the commission figures. fetchSalesData serialises
+// every call and caches the range, so go through it rather than fetch() here.
+import { fetchSalesData } from "../utils/reportHelpers.js";
 
 
 
@@ -10,30 +18,17 @@ import { aggregateSalesDataByStaff} from "../utils/modifyApiData.js";
 export const getAll=async (req,res)=>{
   const { salelocation, startDate, endDate } = req.query;
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-      'token': '5AF49267-8C88-4C2C-8D69-7AB9B493F340'
-    };
     const startdate = changeFormatDateForFetchingData(startDate);
     const enddate = changeFormatDateForFetchingData(endDate);
-      // Fetch data from example.com
-      const datares = await fetch(`https://tcpsvr121.clickpos.net/ctime/ctimeapi/Sales/SaleDatafusion?startdate=${startdate}&enddate=${enddate}`, {headers});
-      
-      // Check if the request was successful
-      if (!datares.ok) {
-        // console.log(`https://tcpsvr121.clickpos.net/ctime/ctimeapi/Sales/SaleDatafusion?startdate=${startdate}&enddate=${enddate}`)
-        throw new Error('Failed to fetch data from example.com');
-      }
-      
-     // Parse the JSON response
-     const alldata = await datares.json();
-       // Check if alldata is an array
+
+    const alldata = await fetchSalesData(startdate, enddate);
     if (!Array.isArray(alldata)) {
       throw new Error('Expected an array but received a different structure');
     }
-    
 
-     const aggregatedData= await aggregateSalesDataByStaff(alldata,'all')
+
+     const rawAggregated = await aggregateSalesDataByStaff(alldata,'all')
+     const aggregatedData = await correctSalesCategories(rawAggregated, startdate, enddate)
      const filteredData = aggregatedData.filter(item => item.salesrep && item.salesrep.trim() !== "");
      // Merge rows by salesrep
     const mergedData = filteredData.reduce((acc, current) => {
@@ -256,24 +251,14 @@ try {
     return res.status(200).json( []);
   }
   
-  const headers = {
-    'Content-Type': 'application/json',
-    'token': '5AF49267-8C88-4C2C-8D69-7AB9B493F340'
-  };
   const startdate = changeFormatDateForFetchingData(startDate);
   const enddate = changeFormatDateForFetchingData(endDate);
-  
-    
-    const datares = await fetch(`https://tcpsvr121.clickpos.net/ctime/ctimeapi/Sales/SaleDatafusion?startdate=${startdate}&enddate=${enddate}`, {headers});
-    
-    // Check if the request was successful
-    if (!datares.ok) {
-      throw new Error('Failed to fetch data from example.com');
-    }
-    // Parse the JSON response
-    const alldata = await datares.json();
-    // console.log("wefadf",alldata)
-  const aggregatedData= await aggregateSalesDataByStaff(alldata,salelocation)
+
+  const alldata = await fetchSalesData(startdate, enddate);
+  const rawAggregated = await aggregateSalesDataByStaff(alldata,salelocation)
+  // Split consumer vs business mobile, and drop technology changes out of
+  // Internet New — neither distinction survives the aggregated feed.
+  const aggregatedData = await correctSalesCategories(rawAggregated, startdate, enddate)
 
     // console.log(aggregatedData)
   const filteredResponse = aggregatedData.filter(item => item.salesrep && item.salesrep.trim() !== "");

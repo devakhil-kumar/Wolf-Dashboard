@@ -36,7 +36,7 @@ import { getGpComparisonThunk, getGpTrendThunk } from '../../features/reportsSli
 import { exportNodeToPdf } from '../../utils/exportPdf';
 import MonthMultiSelect, { currentMonthValue } from '../../components/reports/MonthMultiSelect';
 
-const STORES = ['All Stores', 'Traralgon', 'Warragul', 'Torquay', 'Hamilton'];
+const STORES = ['All Stores', 'Hamilton', 'Torquay', 'Traralgon', 'Warragul'];
 const SEGMENT_COLORS = ['#2C7BE5', '#00B894', '#FF6B35'];
 
 // Years available for the trend chart (this year and the previous few).

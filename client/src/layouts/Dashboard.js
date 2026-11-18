@@ -47,13 +47,31 @@ import { ToastContainer } from "react-toastify";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+// Thousands separators for on-screen dollar amounts, matching the Reports
+// module so both read the same ($1,200 rather than $1200). Exports are left
+// alone on purpose — a comma would turn the cell into text in Excel and stop
+// the client summing or sorting it.
+const money = (n) => {
+  const num = Number(n);
+  return Number.isFinite(num)
+    ? `$${num.toLocaleString("en-AU", { maximumFractionDigits: 0 })}`
+    : `$${n}`;
+};
+
+// Store tab order, as requested by the client. Declared at module scope so the
+// default selection below can derive its index from the name — hardcoding the
+// index meant reordering the tabs silently highlighted the wrong store.
+const tabs = ["All Stores", "Hamilton", "Torquay", "Traralgon", "Warragul"];
+
+const DEFAULT_STORE = "Traralgon";
+
 export default function Dashboard() {
   // State variables
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [selectedTab, setSelectedTab] = useState({
-    index: 1,
-    value: "Traralgon",
+    index: tabs.indexOf(DEFAULT_STORE),
+    value: DEFAULT_STORE,
   });
 
   const [editingCell, setEditingCell] = useState(null); // To track the cell being edited
@@ -595,8 +613,6 @@ const READ_ONLY_EMAILS = [
     format: (value) => value,
   }));
 
-  const tabs = ["All Stores", "Traralgon", "Warragul", "Torquay", "Hamilton"];
-
   // Helper functions for Pro-Rata Staff
   const isProrataStaff = (salesrepName) => {
     if (!prorataStaffList || !salesrepName) return false;
@@ -917,7 +933,11 @@ if (effectiveTargets?.productBonuses && effectiveTargets.productBonuses.length >
     // Map product names to item properties
     switch (productName) {
       case 'PPN':
-        productSales = (item.pnncount || 0) + (item["mob-new"] || 0);
+        // pnncount is the TOTAL PPN count from ClickPos — SB PPN sales are
+        // already inside it. Subtract them so a business sale earns the SB PPN
+        // bonus only, not both. Mirrors the consumer split the PPN column
+        // tooltip uses (totalPPN - totalSbPPN).
+        productSales = (item.pnncount || 0) - (item["SB PPN"] || 0);
         break;
       case 'SB PPN':
         productSales = item["SB PPN"] || 0;
@@ -1025,6 +1045,8 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
   const calculatePPNBreakdown = () => {
     let totalPPN = 0;
     let totalSbPPN = 0;
+    let totalBusiness = 0;
+    let hasBusinessSplit = false;
     let accumulatedTarget = 0;
 
     data?.forEach((item) => {
@@ -1033,6 +1055,14 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
 
       totalPPN += ppnCount;
       totalSbPPN += sbPPN;
+
+      // "Business PPN" comes from the plan-level ClickPos feed and counts new
+      // mobile connections on a business plan. "SB PPN" is a business *bundle*
+      // bucket, so on its own it left business mobile sales showing as consumer.
+      if (item["Business PPN"] !== undefined) {
+        hasBusinessSplit = true;
+        totalBusiness += parseFloat(item["Business PPN"]) || 0;
+      }
     });
 
     // Calculate accumulated store target from all staff's effective targets
@@ -1043,12 +1073,15 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
       }
     });
 
-    const totalConsumer = totalPPN - totalSbPPN;
+    // Prefer the plan-level business count; fall back to the old SB PPN
+    // subtraction when the backend hasn't supplied it.
+    const business = hasBusinessSplit ? totalBusiness : totalSbPPN;
+    const totalConsumer = totalPPN - business;
 
     return {
       total: totalPPN,
       consumer: totalConsumer,
-      sbPPN: totalSbPPN,
+      sbPPN: business,
       target: target?.ppn || 0,
       accumulatedTarget: accumulatedTarget
     };
@@ -1657,7 +1690,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                         }
                                         displayValue={
                                           (column.id === "column-20" || column.id === "column-23") && value !== "N/A"
-                                            ? `$${value}`
+                                            ? money(value)
                                             : value
                                         }
                                         target={
@@ -1761,7 +1794,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                                       value !== "Reach Min GP First" &&
                                       value !== "KPI Requirements Not Met" &&
                                       value !== "Month Complete") ? ( // No tooltip for potential commission
-                                      `$${value}`
+                                      money(value)
                                     ) : (
                                       value
                                     )}
@@ -1882,7 +1915,7 @@ console.log('Product Incentive Breakdown:', productIncentiveBreakdown);
                             index === 24 || // Commission
                             index === 25 || // Potential Commission
                             index === 26   // Product Incentive
-                            ? `$${total}`
+                            ? money(total)
                             : total}
                         </TableCell>
                       ) : null;
